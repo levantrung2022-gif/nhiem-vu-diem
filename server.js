@@ -1,19 +1,173 @@
-const express=require('express');const path=require('path');const Database=require('better-sqlite3');const bcrypt=require('bcryptjs');const jwt=require('jsonwebtoken');const cookieParser=require('cookie-parser');
-const app=express();app.use(express.json({limit:'100kb'}));app.use(cookieParser());app.use(express.static(path.join(__dirname,'public')));
-const dataDir=process.env.DATA_DIR||path.join(__dirname,'data');
-require('fs').mkdirSync(dataDir,{recursive:true});
-const db=new Database(path.join(dataDir,'data.sqlite'));db.pragma('journal_mode=WAL');
-db.exec(`CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,email TEXT NOT NULL UNIQUE,password_hash TEXT NOT NULL,points INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,description TEXT NOT NULL,url TEXT NOT NULL,points INTEGER NOT NULL DEFAULT 5,active INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS completions(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,task_id INTEGER NOT NULL,points INTEGER NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(user_id,task_id,created_at),FOREIGN KEY(user_id) REFERENCES users(id),FOREIGN KEY(task_id) REFERENCES tasks(id));CREATE TABLE IF NOT EXISTS point_ledger(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,amount INTEGER NOT NULL,reason TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,FOREIGN KEY(user_id) REFERENCES users(id));`);
-if(db.prepare('SELECT COUNT(*) c FROM tasks').get().c===0){const ins=db.prepare('INSERT INTO tasks(title,description,url,points) VALUES(?,?,?,?)');[['Khám phá kênh được đề xuất','Mở kênh và tự xem nội dung nếu bạn quan tâm.','https://www.tiktok.com/',5],['Khám phá nội dung cộng đồng','Xem nội dung được cộng đồng đề xuất. Không bắt buộc tương tác.','https://www.tiktok.com/',5],['Điểm danh hôm nay','Ghi nhận hoạt động cộng đồng trong ngày.','https://www.tiktok.com/',5]].forEach(x=>ins.run(...x));}
-const SECRET=process.env.JWT_SECRET||'CHANGE_ME_IN_PRODUCTION';
-function auth(req,res,next){try{const token=req.cookies.session;if(!token) return res.status(401).json({error:'Bạn chưa đăng nhập.'});req.user=jwt.verify(token,SECRET);next()}catch{return res.status(401).json({error:'Phiên đăng nhập đã hết hạn.'})}}
-app.post('/api/register',(req,res)=>{const {name,email,password}=req.body||{};if(!name||!email||!password||password.length<6)return res.status(400).json({error:'Tên, email và mật khẩu từ 6 ký tự là bắt buộc.'});const e=email.trim().toLowerCase();try{const hash=bcrypt.hashSync(password,12);const r=db.prepare('INSERT INTO users(name,email,password_hash) VALUES(?,?,?)').run(name.trim(),e,hash);const token=jwt.sign({id:r.lastInsertRowid},SECRET,{expiresIn:'7d'});res.cookie('session',token,{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',maxAge:604800000});res.json({ok:true})}catch(err){res.status(400).json({error:'Email đã được đăng ký.'})}});
-app.post('/api/login',(req,res)=>{const {email,password}=req.body||{};const u=db.prepare('SELECT * FROM users WHERE email=?').get((email||'').trim().toLowerCase());if(!u||!bcrypt.compareSync(password||'',u.password_hash))return res.status(401).json({error:'Email hoặc mật khẩu không đúng.'});const token=jwt.sign({id:u.id},SECRET,{expiresIn:'7d'});res.cookie('session',token,{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',maxAge:604800000});res.json({ok:true})});
-app.post('/api/logout',(req,res)=>{res.clearCookie('session');res.json({ok:true})});
-app.get('/api/me',auth,(req,res)=>{const u=db.prepare('SELECT id,name,email,points,created_at FROM users WHERE id=?').get(req.user.id);res.json(u)});
-app.get('/api/tasks',auth,(req,res)=>{res.json(db.prepare('SELECT id,title,description,url,points FROM tasks WHERE active=1 ORDER BY id DESC').all())});
-app.post('/api/tasks/:id/complete',auth,(req,res)=>{const task=db.prepare('SELECT * FROM tasks WHERE id=? AND active=1').get(req.params.id);if(!task)return res.status(404).json({error:'Nhiệm vụ không tồn tại.'});const exists=db.prepare("SELECT id FROM completions WHERE user_id=? AND task_id=? AND date(created_at)=date('now')").get(req.user.id,task.id);if(exists)return res.status(409).json({error:'Bạn đã hoàn thành nhiệm vụ này hôm nay.'});const tx=db.transaction(()=>{db.prepare('INSERT INTO completions(user_id,task_id,points) VALUES(?,?,?)').run(req.user.id,task.id,task.points);db.prepare('UPDATE users SET points=points+? WHERE id=?').run(task.points,req.user.id);db.prepare('INSERT INTO point_ledger(user_id,amount,reason) VALUES(?,?,?)').run(req.user.id,task.points,'Hoàn thành nhiệm vụ #'+task.id)});tx();res.json({ok:true,points:task.points})});
-app.get('/api/leaderboard',(req,res)=>{const daily=db.prepare("SELECT name,points FROM users ORDER BY points DESC, id ASC LIMIT 10").all();const weekly=db.prepare("SELECT u.name,COALESCE(SUM(l.amount),0) points FROM users u LEFT JOIN point_ledger l ON l.user_id=u.id AND l.created_at>=datetime('now','-7 days') GROUP BY u.id ORDER BY points DESC,u.id ASC LIMIT 10").all();res.json({daily,weekly})});
-app.get('/api/health',(req,res)=>res.json({ok:true}));
-app.get('/*splat',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
-const port=process.env.PORT||3000;app.listen(port,()=>console.log(`NhiemVuDiem V2 running on http://localhost:${port}`));
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+
+const PORT = process.env.PORT || 10000;
+const HOST = "0.0.0.0";
+
+const ROOT = __dirname;
+
+function findHomePage() {
+  const files = [
+    path.join(ROOT, "index.html"),
+    path.join(ROOT, "web_nhiem_vu_tiktok_v2.html"),
+    path.join(ROOT, "TaskHub_TikTok.html"),
+    path.join(ROOT, "public", "index.html")
+  ];
+
+  for (const file of files) {
+    if (fs.existsSync(file)) {
+      return file;
+    }
+  }
+
+  return null;
+}
+
+function getContentType(file) {
+  const ext = path.extname(file).toLowerCase();
+
+  const types = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon"
+  };
+
+  return types[ext] || "application/octet-stream";
+}
+
+function sendFile(res, file) {
+  try {
+    const data = fs.readFileSync(file);
+
+    res.writeHead(200, {
+      "Content-Type": getContentType(file),
+      "Cache-Control": "no-cache"
+    });
+
+    res.end(data);
+  } catch (error) {
+    console.error(error);
+
+    res.writeHead(500, {
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+
+    res.end("Không thể đọc file.");
+  }
+}
+
+const server = http.createServer((req, res) => {
+  try {
+    let requestPath = (req.url || "/").split("?")[0];
+
+    requestPath = decodeURIComponent(requestPath);
+
+    // Trang chính
+    if (requestPath === "/") {
+      const home = findHomePage();
+
+      if (!home) {
+        res.writeHead(404, {
+          "Content-Type": "text/plain; charset=utf-8"
+        });
+
+        res.end(
+          "Chưa tìm thấy trang web. Hãy đặt file index.html trong repository."
+        );
+
+        return;
+      }
+
+      sendFile(res, home);
+      return;
+    }
+
+    // Health check cho Render
+    if (requestPath === "/health") {
+      res.writeHead(200, {
+        "Content-Type": "application/json; charset=utf-8"
+      });
+
+      res.end(
+        JSON.stringify({
+          status: "ok",
+          service: "nhiem-vu-diem"
+        })
+      );
+
+      return;
+    }
+
+    // Bỏ dấu / ở đầu
+    let relativePath = requestPath.replace(/^\/+/, "");
+
+    // Chặn truy cập ra ngoài thư mục dự án
+    relativePath = path.normalize(relativePath);
+
+    if (
+      relativePath.startsWith("..") ||
+      path.isAbsolute(relativePath)
+    ) {
+      res.writeHead(403, {
+        "Content-Type": "text/plain; charset=utf-8"
+      });
+
+      res.end("Forbidden");
+      return;
+    }
+
+    const possibleFiles = [
+      path.join(ROOT, relativePath),
+      path.join(ROOT, "public", relativePath)
+    ];
+
+    for (const file of possibleFiles) {
+      if (fs.existsSync(file) && fs.statSync(file).isFile()) {
+        sendFile(res, file);
+        return;
+      }
+    }
+
+    // Nếu route không tồn tại thì trả về trang chính
+    // để tránh lỗi Cannot GET /
+    const home = findHomePage();
+
+    if (home) {
+      sendFile(res, home);
+      return;
+    }
+
+    res.writeHead(404, {
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+
+    res.end("404 - Không tìm thấy trang.");
+
+  } catch (error) {
+    console.error("SERVER ERROR:", error);
+
+    res.writeHead(500, {
+      "Content-Type": "text/plain; charset=utf-8"
+    });
+
+    res.end("Server error.");
+  }
+});
+
+server.listen(PORT, HOST, () => {
+  console.log("-----------------------------------");
+  console.log("NHIEM VU DIEM SERVER");
+  console.log("Server đang chạy");
+  console.log("Port:", PORT);
+  console.log("Host:", HOST);
+  console.log("-----------------------------------");
+});
