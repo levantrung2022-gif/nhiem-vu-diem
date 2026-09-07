@@ -4,425 +4,294 @@ const path = require("path");
 const crypto = require("crypto");
 const { Pool } = require("pg");
 
-/* =========================================================
-   CONFIG
-========================================================= */
-
-const PORT = Number(process.env.PORT) || 10000;
-
+const PORT = Number(process.env.PORT || 10000);
 const HOST = "0.0.0.0";
 
-const ROOT = __dirname;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-const INDEX_FILE = path.join(ROOT, "index.html");
-
-/*
-  DATABASE_URL sẽ được thêm vào Render.
-  Nếu chưa có DATABASE_URL, server vẫn có thể chạy
-  bằng bộ nhớ tạm để test giao diện.
-*/
-const DATABASE_URL = process.env.DATABASE_URL || "";
-
-
-/* =========================================================
-   DATABASE
-========================================================= */
-
-let pool = null;
-
-if (DATABASE_URL) {
-
-  pool = new Pool({
-    connectionString: DATABASE_URL,
-
-    ssl: {
-      rejectUnauthorized: false
-    }
-  });
-
-  pool.on("error", (err) => {
-    console.error("PostgreSQL error:", err);
-  });
-
-} else {
-
-  console.warn(
-    "WARNING: DATABASE_URL chưa được cấu hình. " +
-    "Server đang chạy chế độ bộ nhớ tạm."
-  );
-
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL chưa được cấu hình trên Render.");
 }
 
-
-/* =========================================================
-   TEMP MEMORY DATABASE
-========================================================= */
-
-const memory = {
-
-  users: [],
-
-  tasks: [
-
-    {
-      id: 1,
-      title: "Khám phá kênh TikTok chính",
-      description: "Mở kênh @uyn.uyn2229 và xem nội dung.",
-      url: "https://www.tiktok.com/@uyn.uyn2229",
-      points: 10,
-      active: true
-    },
-
-    {
-      id: 2,
-      title: "Khám phá video mới",
-      description: "Mở video TikTok được đề xuất.",
-      url: "https://www.tiktok.com/@uyn.uyn2229",
-      points: 10,
-      active: true
-    },
-
-    {
-      id: 3,
-      title: "Khám phá nhà sáng tạo",
-      description: "Mở trang TikTok và khám phá nội dung.",
-      url: "https://www.tiktok.com/@uyn.uyn2229",
-      points: 10,
-      active: true
-    },
-
-    {
-      id: 4,
-      title: "Xem nội dung nổi bật",
-      description: "Mở kênh TikTok để xem nội dung.",
-      url: "https://www.tiktok.com/@uyn.uyn2229",
-      points: 15,
-      active: true
-    }
-
-  ],
-
-  completions: [],
-
-  nextUserId: 1
-
-};
-
-
-/* =========================================================
-   SESSION
-========================================================= */
+const pool = DATABASE_URL
+  ? new Pool({
+      connectionString: DATABASE_URL,
+      ssl:
+        process.env.NODE_ENV === "production"
+          ? { rejectUnauthorized: false }
+          : false
+    })
+  : null;
 
 const sessions = new Map();
 
+const MAIN_CHANNEL = {
+  name: "@uyn.uyn2229",
+  url: "https://www.tiktok.com/@uyn.uyn2229"
+};
+
+// =========================
+// CẤU HÌNH
+// =========================
+
+const CHECKIN_POINTS = 5;
+
+// Người được giới thiệu đạt từ 20 điểm
+const REFERRAL_THRESHOLD = 20;
+
+// Người giới thiệu nhận 20 điểm
+const REFERRAL_REWARD = 20;
+
+// =========================
+// HTTP HELPERS
+// =========================
+
+function sendJSON(res, status, data, headers = {}) {
+  const body = JSON.stringify(data);
+
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    ...headers
+  });
+
+  res.end(body);
+}
+
+function sendText(res, status, body, type = "text/plain; charset=utf-8") {
+  res.writeHead(status, {
+    "Content-Type": type
+  });
+
+  res.end(body);
+}
+
+function parseCookies(req) {
+  const cookies = {};
+
+  const raw = req.headers.cookie || "";
+
+  raw.split(";").forEach((item) => {
+    const index = item.indexOf("=");
+
+    if (index === -1) return;
+
+    const key = item.slice(0, index).trim();
+    const value = item.slice(index + 1).trim();
+
+    cookies[key] = decodeURIComponent(value);
+  });
+
+  return cookies;
+}
 
 function createSession(userId) {
+  const sid = crypto.randomBytes(32).toString("hex");
 
-  const sid =
-    crypto.randomBytes(32).toString("hex");
-
-  sessions.set(
-    sid,
-    {
-      userId,
-      createdAt: Date.now()
-    }
-  );
+  sessions.set(sid, {
+    userId,
+    createdAt: Date.now()
+  });
 
   return sid;
 }
 
-
 function getSessionUserId(req) {
+  const cookies = parseCookies(req);
 
-  const cookie =
-    req.headers.cookie || "";
+  const session = cookies.sid
+    ? sessions.get(cookies.sid)
+    : null;
 
-  const match =
-    cookie.match(
-      /(?:^|;\s*)sid=([^;]+)/
-    );
-
-  if (!match) {
-
-    return null;
-
-  }
-
-  const sid =
-    decodeURIComponent(match[1]);
-
-  const session =
-    sessions.get(sid);
-
-  if (!session) {
-
-    return null;
-
-  }
-
-  return session.userId;
+  return session ? Number(session.userId) : null;
 }
 
-
-function setSessionCookie(res, sid) {
-
+function setSession(res, sid) {
   res.setHeader(
     "Set-Cookie",
-    `sid=${encodeURIComponent(sid)}; HttpOnly; Path=/; SameSite=Lax`
+    `sid=${encodeURIComponent(
+      sid
+    )}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000`
   );
-
 }
 
-
-function clearSessionCookie(res) {
-
+function clearSession(res) {
   res.setHeader(
     "Set-Cookie",
-    "sid=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax"
+    "sid=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"
   );
-
 }
 
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
 
-/* =========================================================
-   PASSWORD
-========================================================= */
+    req.on("data", (chunk) => {
+      body += chunk;
+
+      if (body.length > 1000000) {
+        req.destroy();
+        reject(new Error("Dữ liệu gửi lên quá lớn."));
+      }
+    });
+
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Dữ liệu JSON không hợp lệ."));
+      }
+    });
+
+    req.on("error", reject);
+  });
+}
+
+// =========================
+// PASSWORD
+// =========================
 
 function hashPassword(password, salt) {
+  const realSalt =
+    salt || crypto.randomBytes(16).toString("hex");
 
-  return crypto
-    .scryptSync(
+  const hash = crypto
+    .scryptSync(password, realSalt, 64)
+    .toString("hex");
+
+  return {
+    hash,
+    salt: realSalt
+  };
+}
+
+function verifyPassword(password, hash, salt) {
+  try {
+    const actual = crypto.scryptSync(
       password,
       salt,
       64
-    )
-    .toString("hex");
-
-}
-
-
-function createPassword(password) {
-
-  const salt =
-    crypto.randomBytes(16).toString("hex");
-
-  const hash =
-    hashPassword(
-      password,
-      salt
     );
 
-  return {
-    salt,
-    hash
-  };
+    const expected = Buffer.from(hash, "hex");
 
-}
-
-
-function verifyPassword(
-  password,
-  hash,
-  salt
-) {
-
-  const calculated =
-    hashPassword(
-      password,
-      salt
+    return (
+      actual.length === expected.length &&
+      crypto.timingSafeEqual(actual, expected)
     );
-
-  try {
-
-    return crypto.timingSafeEqual(
-      Buffer.from(calculated, "hex"),
-      Buffer.from(hash, "hex")
-    );
-
-  } catch (_) {
-
+  } catch {
     return false;
-
   }
-
 }
 
+// =========================
+// VALIDATION
+// =========================
 
-/* =========================================================
-   UTILITIES
-========================================================= */
+function validUsername(username) {
+  return (
+    typeof username === "string" &&
+    /^[A-Za-z0-9_.-]{3,24}$/.test(username)
+  );
+}
 
-function json(res, status, data) {
+function validEmail(email) {
+  return (
+    typeof email === "string" &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  );
+}
 
-  res.statusCode = status;
+function createReferralCode() {
+  return crypto
+    .randomBytes(6)
+    .toString("hex")
+    .toUpperCase();
+}
 
-  res.setHeader(
-    "Content-Type",
-    "application/json; charset=utf-8"
+// =========================
+// USER
+// =========================
+
+async function getUserById(id) {
+  const result = await pool.query(
+    `
+    SELECT
+      u.*,
+      (
+        SELECT COUNT(*)
+        FROM users r
+        WHERE r.referred_by = u.id
+      ) AS referred_count
+    FROM users u
+    WHERE u.id = $1
+    `,
+    [id]
   );
 
-  res.end(
-    JSON.stringify(data)
+  return result.rows[0] || null;
+}
+
+async function getUserByLogin(identifier) {
+  const result = await pool.query(
+    `
+    SELECT
+      u.*,
+      (
+        SELECT COUNT(*)
+        FROM users r
+        WHERE r.referred_by = u.id
+      ) AS referred_count
+    FROM users u
+    WHERE LOWER(u.username) = LOWER($1)
+       OR LOWER(u.email) = LOWER($1)
+    LIMIT 1
+    `,
+    [identifier]
   );
 
+  return result.rows[0] || null;
 }
-
-
-function text(res, status, data) {
-
-  res.statusCode = status;
-
-  res.setHeader(
-    "Content-Type",
-    "text/plain; charset=utf-8"
-  );
-
-  res.end(data);
-
-}
-
-
-function parseBody(req) {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      let body = "";
-
-      req.on(
-        "data",
-        chunk => {
-
-          body += chunk.toString();
-
-          if (body.length > 1024 * 1024) {
-
-            reject(
-              new Error(
-                "Request quá lớn."
-              )
-            );
-
-            req.destroy();
-
-          }
-
-        }
-      );
-
-
-      req.on(
-        "end",
-        () => {
-
-          if (!body) {
-
-            resolve({});
-
-            return;
-
-          }
-
-          try {
-
-            resolve(
-              JSON.parse(body)
-            );
-
-          } catch (_) {
-
-            reject(
-              new Error(
-                "Dữ liệu JSON không hợp lệ."
-              )
-            );
-
-          }
-
-        }
-      );
-
-
-      req.on(
-        "error",
-        reject
-      );
-
-    }
-  );
-
-}
-
-
-function normalizeUsername(value) {
-
-  return String(
-    value || ""
-  )
-    .trim();
-
-}
-
-
-function normalizeEmail(value) {
-
-  return String(
-    value || ""
-  )
-    .trim()
-    .toLowerCase();
-
-}
-
 
 function publicUser(user) {
-
-  if (!user) {
-
-    return null;
-
-  }
+  if (!user) return null;
 
   return {
-
     id: Number(user.id),
-
     username: user.username,
-
     email: user.email,
-
     points: Number(user.points || 0),
-
-    completed: Number(user.completed || 0)
-
+    completed: Number(user.completed || 0),
+    referral_code: user.referral_code,
+    referred_count: Number(user.referred_count || 0),
+    referral_earned: Number(user.referral_earned || 0),
+    created_at: user.created_at
   };
-
 }
 
-
-/* =========================================================
-   DATABASE INIT
-========================================================= */
+// =========================
+// DATABASE
+// =========================
 
 async function initDatabase() {
-
   if (!pool) {
-
-    return;
-
+    throw new Error(
+      "DATABASE_URL chưa được cấu hình."
+    );
   }
 
-
   await pool.query(`
-
     CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
 
-      id BIGSERIAL PRIMARY KEY,
+      username VARCHAR(24) UNIQUE NOT NULL,
 
-      username VARCHAR(24) NOT NULL UNIQUE,
-
-      email VARCHAR(255) NOT NULL UNIQUE,
+      email VARCHAR(255) UNIQUE NOT NULL,
 
       password_hash TEXT NOT NULL,
 
@@ -432,1919 +301,1035 @@ async function initDatabase() {
 
       completed INTEGER NOT NULL DEFAULT 0,
 
+      referral_code VARCHAR(32) UNIQUE NOT NULL,
+
+      referred_by INTEGER
+        REFERENCES users(id)
+        ON DELETE SET NULL,
+
+      referral_rewarded BOOLEAN NOT NULL DEFAULT FALSE,
+
+      referral_earned INTEGER NOT NULL DEFAULT 0,
+
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
     );
-
   `);
 
-
   await pool.query(`
-
     CREATE TABLE IF NOT EXISTS tasks (
-
-      id BIGSERIAL PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
 
       title TEXT NOT NULL,
 
-      description TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+
+      kind VARCHAR(20) NOT NULL DEFAULT 'channel',
 
       url TEXT NOT NULL,
 
-      points INTEGER NOT NULL DEFAULT 10,
+      points INTEGER NOT NULL DEFAULT 5,
 
       active BOOLEAN NOT NULL DEFAULT TRUE,
 
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
     );
-
   `);
 
-
   await pool.query(`
-
     CREATE TABLE IF NOT EXISTS completions (
+      id SERIAL PRIMARY KEY,
 
-      id BIGSERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
 
-      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      task_id INTEGER NOT NULL
+        REFERENCES tasks(id)
+        ON DELETE CASCADE,
 
-      task_id BIGINT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-
-      points INTEGER NOT NULL DEFAULT 0,
+      points INTEGER NOT NULL,
 
       completed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
     );
-
   `);
-
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS checkins (
+      id SERIAL PRIMARY KEY,
 
-    CREATE INDEX IF NOT EXISTS idx_completions_user
+      user_id INTEGER NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
 
-    ON completions(user_id);
+      checkin_date DATE NOT NULL,
 
+      points INTEGER NOT NULL,
+
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+      UNIQUE(user_id, checkin_date)
+    );
   `);
-
 
   await pool.query(`
-
-    CREATE INDEX IF NOT EXISTS idx_completions_date
-
-    ON completions(completed_at);
-
+    CREATE INDEX IF NOT EXISTS idx_completions_user_time
+    ON completions(user_id, completed_at);
   `);
 
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_checkins_user_date
+    ON checkins(user_id, checkin_date);
+  `);
 
-  const result =
-    await pool.query(
-      "SELECT COUNT(*)::int AS count FROM tasks"
-    );
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_users_referred_by
+    ON users(referred_by);
+  `);
 
+  // Thêm nhiệm vụ mặc định nếu chưa có
+  const count = await pool.query(
+    `SELECT COUNT(*)::int AS count FROM tasks`
+  );
 
-  if (result.rows[0].count === 0) {
+  if (Number(count.rows[0].count) === 0) {
+    const tasks = [
+      [
+        "Khám phá kênh TikTok chính",
+        "Mở kênh TikTok chính và khám phá nội dung.",
+        "channel",
+        MAIN_CHANNEL.url,
+        5
+      ],
+      [
+        "Khám phá video TikTok",
+        "Mở video TikTok và tự xem nội dung.",
+        "video",
+        MAIN_CHANNEL.url,
+        5
+      ],
+      [
+        "Khám phá kênh TikTok",
+        "Mở kênh TikTok và khám phá nội dung.",
+        "channel",
+        MAIN_CHANNEL.url,
+        5
+      ]
+    ];
 
-    for (const task of memory.tasks) {
-
+    for (const task of tasks) {
       await pool.query(
-
         `
-
         INSERT INTO tasks
-        (title, description, url, points, active)
-
+        (title, description, kind, url, points)
         VALUES ($1, $2, $3, $4, $5)
-
         `,
-
-        [
-          task.title,
-          task.description,
-          task.url,
-          task.points,
-          task.active
-        ]
-
+        task
       );
-
     }
-
   }
 
-
-  console.log(
-    "PostgreSQL database initialized."
-  );
-
+  console.log("PostgreSQL database ready.");
 }
 
-
-/* =========================================================
-   MEMORY USER HELPERS
-========================================================= */
-
-function findMemoryUserById(id) {
-
-  return memory.users.find(
-    user =>
-      Number(user.id) === Number(id)
-  ) || null;
-
-}
-
-
-function findMemoryUserByIdentity(identity) {
-
-  const value =
-    String(identity)
-      .trim()
-      .toLowerCase();
-
-  return memory.users.find(
-    user =>
-      user.username.toLowerCase() === value ||
-      user.email.toLowerCase() === value
-  ) || null;
-
-}
-
-
-/* =========================================================
-   USER FUNCTIONS
-========================================================= */
-
-async function findUserById(id) {
-
-  if (pool) {
-
-    const result =
-      await pool.query(
-
-        `
-
-        SELECT
-          id,
-          username,
-          email,
-          password_hash,
-          password_salt,
-          points,
-          completed
-
-        FROM users
-
-        WHERE id = $1
-
-        LIMIT 1
-
-        `,
-
-        [id]
-
-      );
-
-    return result.rows[0] || null;
-
-  }
-
-
-  return findMemoryUserById(id);
-
-}
-
-
-async function findUserByIdentity(identity) {
-
-  const value =
-    String(identity)
-      .trim()
-      .toLowerCase();
-
-
-  if (pool) {
-
-    const result =
-      await pool.query(
-
-        `
-
-        SELECT
-          id,
-          username,
-          email,
-          password_hash,
-          password_salt,
-          points,
-          completed
-
-        FROM users
-
-        WHERE LOWER(username) = $1
-           OR LOWER(email) = $1
-
-        LIMIT 1
-
-        `,
-
-        [value]
-
-      );
-
-    return result.rows[0] || null;
-
-  }
-
-
-  return findMemoryUserByIdentity(
-    identity
-  );
-
-}
-
-
-async function usernameExists(username) {
-
-  if (pool) {
-
-    const result =
-      await pool.query(
-
-        `
-
-        SELECT 1
-
-        FROM users
-
-        WHERE LOWER(username) = LOWER($1)
-
-        LIMIT 1
-
-        `,
-
-        [username]
-
-      );
-
-    return result.rowCount > 0;
-
-  }
-
-
-  return memory.users.some(
-    user =>
-      user.username.toLowerCase() ===
-      username.toLowerCase()
-  );
-
-}
-
-
-async function emailExists(email) {
-
-  if (pool) {
-
-    const result =
-      await pool.query(
-
-        `
-
-        SELECT 1
-
-        FROM users
-
-        WHERE LOWER(email) = LOWER($1)
-
-        LIMIT 1
-
-        `,
-
-        [email]
-
-      );
-
-    return result.rowCount > 0;
-
-  }
-
-
-  return memory.users.some(
-    user =>
-      user.email.toLowerCase() ===
-      email.toLowerCase()
-  );
-
-}
-
-
-/* =========================================================
-   REGISTER
-========================================================= */
-
-async function registerUser(
-  username,
-  email,
-  password
-) {
-
-  const passwordData =
-    createPassword(password);
-
-
-  if (pool) {
-
-    const result =
-      await pool.query(
-
-        `
-
-        INSERT INTO users
+// =========================
+// DASHBOARD
+// =========================
+
+async function getDashboard(userId) {
+  const result = await pool.query(
+    `
+    SELECT
+      u.points,
+      u.completed,
+
+      COALESCE(
         (
-          username,
-          email,
-          password_hash,
-          password_salt
-        )
+          SELECT SUM(c.points)
+          FROM completions c
+          WHERE c.user_id = u.id
+            AND c.completed_at >= CURRENT_DATE
+        ),
+        0
+      )::int AS today
 
-        VALUES ($1, $2, $3, $4)
+    FROM users u
 
-        RETURNING
-          id,
-          username,
-          email,
-          points,
-          completed
+    WHERE u.id = $1
+    `,
+    [userId]
+  );
 
-        `,
-
-        [
-          username,
-          email,
-          passwordData.hash,
-          passwordData.salt
-        ]
-
-      );
-
-    return result.rows[0];
-
-  }
-
-
-  const user = {
-
-    id: memory.nextUserId++,
-
-    username,
-
-    email,
-
-    password_hash:
-      passwordData.hash,
-
-    password_salt:
-      passwordData.salt,
-
-    points: 0,
-
-    completed: 0,
-
-    created_at:
-      new Date().toISOString()
-
-  };
-
-
-  memory.users.push(user);
-
-  return user;
-
+  return (
+    result.rows[0] || {
+      points: 0,
+      completed: 0,
+      today: 0
+    }
+  );
 }
 
-
-/* =========================================================
-   TASK FUNCTIONS
-========================================================= */
+// =========================
+// TASKS
+// =========================
 
 async function getRandomTasks(userId) {
+  const result = await pool.query(
+    `
+    SELECT
+      id,
+      title,
+      description,
+      kind,
+      url,
+      points
 
-  if (pool) {
+    FROM tasks
 
-    const result =
-      await pool.query(
+    WHERE active = TRUE
 
-        `
+      AND id NOT IN (
+        SELECT task_id
+        FROM completions
+        WHERE user_id = $1
+      )
 
-        SELECT
-          t.id,
-          t.title,
-          t.description,
-          t.url,
-          t.points,
-          t.active,
+    ORDER BY RANDOM()
 
-          EXISTS (
+    LIMIT 10
+    `,
+    [userId]
+  );
 
-            SELECT 1
-
-            FROM completions c
-
-            WHERE c.user_id = $1
-
-              AND c.task_id = t.id
-
-          ) AS completed
-
-        FROM tasks t
-
-        WHERE t.active = TRUE
-
-        ORDER BY RANDOM()
-
-        LIMIT 8
-
-        `,
-
-        [userId || 0]
-
-      );
-
-
-    return result.rows;
-
-  }
-
-
-  return memory.tasks
-    .filter(task => task.active)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 8)
-    .map(task => ({
-
-      ...task,
-
-      completed:
-        userId
-          ? memory.completions.some(
-              completion =>
-                completion.userId ===
-                  Number(userId) &&
-                completion.taskId ===
-                  Number(task.id)
-            )
-          : false
-
-    }));
-
+  return result.rows;
 }
 
+// =========================
+// COMPLETE TASK
+// =========================
 
-async function getTaskById(taskId) {
+async function completeTask(userId, taskId) {
+  const client = await pool.connect();
 
-  if (pool) {
+  try {
+    await client.query("BEGIN");
 
-    const result =
-      await pool.query(
-
-        `
-
-        SELECT *
-
-        FROM tasks
-
-        WHERE id = $1
-
-          AND active = TRUE
-
-        LIMIT 1
-
-        `,
-
-        [taskId]
-
-      );
-
-    return result.rows[0] || null;
-
-  }
-
-
-  return memory.tasks.find(
-    task =>
-      Number(task.id) ===
-      Number(taskId) &&
-      task.active
-  ) || null;
-
-}
-
-
-/* =========================================================
-   COMPLETE TASK
-========================================================= */
-
-async function completeTask(
-  userId,
-  taskId
-) {
-
-  const task =
-    await getTaskById(taskId);
-
-
-  if (!task) {
-
-    throw new Error(
-      "Nhiệm vụ không tồn tại."
+    const taskResult = await client.query(
+      `
+      SELECT id, points
+      FROM tasks
+      WHERE id = $1
+        AND active = TRUE
+      FOR SHARE
+      `,
+      [taskId]
     );
 
-  }
-
-
-  if (pool) {
-
-    /*
-      Chống cộng điểm lặp:
-      Một nhiệm vụ chỉ được tính điểm
-      một lần cho một tài khoản.
-    */
-
-    const existing =
-      await pool.query(
-
-        `
-
-        SELECT id
-
-        FROM completions
-
-        WHERE user_id = $1
-
-          AND task_id = $2
-
-        LIMIT 1
-
-        `,
-
-        [
-          userId,
-          taskId
-        ]
-
-      );
-
-
-    if (existing.rowCount > 0) {
-
+    if (!taskResult.rows.length) {
       throw new Error(
-        "Bạn đã hoàn thành nhiệm vụ này rồi."
+        "Nhiệm vụ không tồn tại hoặc đã bị tắt."
       );
-
     }
 
+    const already = await client.query(
+      `
+      SELECT id
+      FROM completions
+      WHERE user_id = $1
+        AND task_id = $2
+      LIMIT 1
+      `,
+      [userId, taskId]
+    );
 
-    const client =
-      await pool.connect();
-
-
-    try {
-
-      await client.query(
-        "BEGIN"
+    if (already.rows.length) {
+      throw new Error(
+        "Bạn đã hoàn thành nhiệm vụ này."
       );
+    }
 
+    const taskPoints = Number(
+      taskResult.rows[0].points
+    );
 
-      const insertResult =
-        await client.query(
+    await client.query(
+      `
+      INSERT INTO completions
+      (user_id, task_id, points)
+      VALUES ($1, $2, $3)
+      `,
+      [userId, taskId, taskPoints]
+    );
 
-          `
+    const userResult = await client.query(
+      `
+      UPDATE users
 
-          INSERT INTO completions
-          (
-            user_id,
-            task_id,
-            points
-          )
+      SET
+        points = points + $1,
+        completed = completed + 1
 
-          VALUES ($1, $2, $3)
+      WHERE id = $2
 
-          RETURNING id
+      RETURNING
+        id,
+        points,
+        referred_by,
+        referral_rewarded
+      `,
+      [taskPoints, userId]
+    );
 
-          `,
+    const user = userResult.rows[0];
 
-          [
-            userId,
-            taskId,
-            Number(task.points)
-          ]
+    let referralActivated = false;
 
-        );
+    // =====================================
+    // THƯỞNG GIỚI THIỆU
+    // =====================================
 
-
-      await client.query(
-
+    if (
+      user.referred_by &&
+      !user.referral_rewarded &&
+      Number(user.points) >= REFERRAL_THRESHOLD
+    ) {
+      const inviterResult = await client.query(
         `
-
         UPDATE users
 
         SET
           points = points + $1,
-          completed = completed + 1
+          referral_earned =
+            referral_earned + $1
 
         WHERE id = $2
 
+        RETURNING id
         `,
-
         [
-          Number(task.points),
-          userId
+          REFERRAL_REWARD,
+          user.referred_by
         ]
-
       );
 
+      if (inviterResult.rows.length) {
+        await client.query(
+          `
+          UPDATE users
 
-      await client.query(
-        "COMMIT"
-      );
+          SET referral_rewarded = TRUE
 
+          WHERE id = $1
+          `,
+          [userId]
+        );
 
-      const user =
-        await findUserById(userId);
-
-
-      return {
-
-        success: true,
-
-        pointsAdded:
-          Number(task.points),
-
-        points:
-          Number(user.points),
-
-        completed:
-          Number(user.completed),
-
-        completionId:
-          insertResult.rows[0].id
-
-      };
-
-    } catch (error) {
-
-      await client.query(
-        "ROLLBACK"
-      );
-
-      throw error;
-
-    } finally {
-
-      client.release();
-
+        referralActivated = true;
+      }
     }
 
+    await client.query("COMMIT");
+
+    return {
+      points: taskPoints,
+      total_points: Number(user.points),
+      referralActivated
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
   }
-
-
-  /*
-    Memory mode
-  */
-
-  const already =
-    memory.completions.find(
-      completion =>
-        completion.userId ===
-          Number(userId) &&
-        completion.taskId ===
-          Number(taskId)
-    );
-
-
-  if (already) {
-
-    throw new Error(
-      "Bạn đã hoàn thành nhiệm vụ này rồi."
-    );
-
-  }
-
-
-  memory.completions.push({
-
-    id:
-      memory.completions.length + 1,
-
-    userId:
-      Number(userId),
-
-    taskId:
-      Number(taskId),
-
-    points:
-      Number(task.points),
-
-    completedAt:
-      new Date().toISOString()
-
-  });
-
-
-  const user =
-    findMemoryUserById(userId);
-
-
-  user.points +=
-    Number(task.points);
-
-
-  user.completed += 1;
-
-
-  return {
-
-    success: true,
-
-    pointsAdded:
-      Number(task.points),
-
-    points:
-      user.points,
-
-    completed:
-      user.completed
-
-  };
-
 }
 
+// =========================
+// CHECK-IN
+// =========================
 
-/* =========================================================
-   TODAY COUNT
-========================================================= */
+async function getCheckinStatus(userId) {
+  const result = await pool.query(
+    `
+    SELECT EXISTS(
+      SELECT 1
+      FROM checkins
+      WHERE user_id = $1
+        AND checkin_date = CURRENT_DATE
+    ) AS checked_in
+    `,
+    [userId]
+  );
 
-async function getTodayCount(userId) {
+  return {
+    checked_in: result.rows[0].checked_in,
+    points: CHECKIN_POINTS
+  };
+}
 
-  if (pool) {
+async function doCheckin(userId) {
+  const client = await pool.connect();
 
-    const result =
-      await pool.query(
+  try {
+    await client.query("BEGIN");
 
-        `
+    const exists = await client.query(
+      `
+      SELECT id
+      FROM checkins
+      WHERE user_id = $1
+        AND checkin_date = CURRENT_DATE
+      LIMIT 1
+      `,
+      [userId]
+    );
 
-        SELECT COUNT(*)::int AS count
-
-        FROM completions
-
-        WHERE user_id = $1
-
-          AND completed_at >= CURRENT_DATE
-
-          AND completed_at <
-              CURRENT_DATE + INTERVAL '1 day'
-
-        `,
-
-        [userId]
-
+    if (exists.rows.length) {
+      throw new Error(
+        "Bạn đã điểm danh hôm nay rồi."
       );
-
-
-    return Number(
-      result.rows[0].count
-    );
-
-  }
-
-
-  const now =
-    new Date();
-
-
-  const start =
-    new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
-
-
-  return memory.completions.filter(
-    completion =>
-
-      completion.userId ===
-        Number(userId) &&
-
-      new Date(
-        completion.completedAt
-      ) >= start
-
-  ).length;
-
-}
-
-
-/* =========================================================
-   DASHBOARD
-========================================================= */
-
-async function getDashboard(userId) {
-
-  const user =
-    await findUserById(userId);
-
-
-  if (!user) {
-
-    throw new Error(
-      "Không tìm thấy tài khoản."
-    );
-
-  }
-
-
-  const today =
-    await getTodayCount(userId);
-
-
-  return {
-
-    user:
-      publicUser(user),
-
-    points:
-      Number(user.points || 0),
-
-    completed:
-      Number(user.completed || 0),
-
-    today
-
-  };
-
-}
-
-
-/* =========================================================
-   LEADERBOARD
-========================================================= */
-
-async function getLeaderboard(
-  period
-) {
-
-  const isWeek =
-    period === "week";
-
-
-  if (pool) {
-
-    const condition =
-      isWeek
-
-        ? `
-          c.completed_at >=
-          CURRENT_DATE - INTERVAL '6 days'
-        `
-
-        : `
-          c.completed_at >= CURRENT_DATE
-        `;
-
-
-    const result =
-      await pool.query(`
-
-        SELECT
-
-          u.id,
-
-          u.username,
-
-          COALESCE(
-            SUM(c.points),
-            0
-          )::int AS points
-
-        FROM users u
-
-        LEFT JOIN completions c
-
-          ON c.user_id = u.id
-
-          AND ${condition}
-
-        GROUP BY
-          u.id,
-          u.username
-
-        HAVING
-          COALESCE(SUM(c.points), 0) > 0
-
-        ORDER BY
-          points DESC,
-          u.username ASC
-
-        LIMIT 50
-
-      `);
-
-
-    return result.rows.map(
-      row => ({
-
-        id:
-          Number(row.id),
-
-        username:
-          row.username,
-
-        points:
-          Number(row.points || 0)
-
-      })
-    );
-
-  }
-
-
-  const now =
-    new Date();
-
-
-  const start =
-    new Date();
-
-
-  if (isWeek) {
-
-    start.setDate(
-      now.getDate() - 6
-    );
-
-  } else {
-
-    start.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-
-  }
-
-
-  const totals =
-    new Map();
-
-
-  for (
-    const completion
-    of memory.completions
-  ) {
-
-    if (
-      new Date(
-        completion.completedAt
-      ) < start
-    ) {
-
-      continue;
-
     }
 
+    await client.query(
+      `
+      INSERT INTO checkins
+      (user_id, checkin_date, points)
 
-    const id =
-      Number(
-        completion.userId
-      );
-
-
-    totals.set(
-      id,
-      (totals.get(id) || 0) +
-      Number(completion.points)
+      VALUES
+      ($1, CURRENT_DATE, $2)
+      `,
+      [userId, CHECKIN_POINTS]
     );
 
-  }
+    const result = await client.query(
+      `
+      UPDATE users
 
+      SET points = points + $1
 
-  return memory.users
+      WHERE id = $2
 
-    .filter(
-      user =>
-        totals.has(
-          Number(user.id)
-        )
-    )
-
-    .map(user => ({
-
-      id:
-        Number(user.id),
-
-      username:
-        user.username,
-
-      points:
-        totals.get(
-          Number(user.id)
-        ) || 0
-
-    }))
-
-    .sort(
-      (a, b) =>
-        b.points - a.points
-    )
-
-    .slice(0, 50);
-
-}
-
-
-/* =========================================================
-   CURRENT USER
-========================================================= */
-
-async function requireUser(req, res) {
-
-  const userId =
-    getSessionUserId(req);
-
-
-  if (!userId) {
-
-    json(
-      res,
-      401,
-      {
-        error:
-          "Bạn cần đăng nhập."
-      }
+      RETURNING points
+      `,
+      [CHECKIN_POINTS, userId]
     );
 
-    return null;
+    await client.query("COMMIT");
 
-  }
-
-
-  const user =
-    await findUserById(userId);
-
-
-  if (!user) {
-
-    json(
-      res,
-      401,
-      {
-        error:
-          "Phiên đăng nhập không hợp lệ."
-      }
-    );
-
-    return null;
-
-  }
-
-
-  return user;
-
-}
-
-
-/* =========================================================
-   ROUTE HANDLERS
-========================================================= */
-
-async function handleRequest(
-  req,
-  res
-) {
-
-  const parsedUrl =
-    new URL(
-      req.url,
-      `http://${req.headers.host || "localhost"}`
-    );
-
-
-  const pathname =
-    parsedUrl.pathname;
-
-
-  /* ======================================
-     HOME
-  ====================================== */
-
-  if (
-    req.method === "GET" &&
-    (
-      pathname === "/" ||
-      pathname === "/index.html"
-    )
-  ) {
-
-    if (
-      !fs.existsSync(
-        INDEX_FILE
+    return {
+      points: CHECKIN_POINTS,
+      total_points: Number(
+        result.rows[0].points
       )
-    ) {
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
-      text(
-        res,
-        404,
-        "Không tìm thấy index.html"
-      );
+// =========================
+// LEADERBOARD
+// =========================
 
-      return;
+async function getLeaderboard(period) {
+  let condition;
 
-    }
-
-
-    const html =
-      fs.readFileSync(
-        INDEX_FILE
-      );
-
-
-    res.statusCode = 200;
-
-    res.setHeader(
-      "Content-Type",
-      "text/html; charset=utf-8"
-    );
-
-    res.end(html);
-
-    return;
-
+  if (period === "week") {
+    condition =
+      "c.completed_at >= CURRENT_DATE - INTERVAL '6 days'";
+  } else {
+    condition =
+      "c.completed_at >= CURRENT_DATE";
   }
 
+  const result = await pool.query(`
+    SELECT
+      u.username,
 
-  /* ======================================
-     HEALTH
-  ====================================== */
+      COALESCE(
+        SUM(c.points),
+        0
+      )::int AS points
+
+    FROM users u
+
+    LEFT JOIN completions c
+      ON c.user_id = u.id
+      AND ${condition}
+
+    GROUP BY
+      u.id,
+      u.username
+
+    HAVING
+      COALESCE(SUM(c.points), 0) > 0
+
+    ORDER BY
+      points DESC,
+      u.username ASC
+
+    LIMIT 50
+  `);
+
+  return result.rows.map((row, index) => ({
+    rank: index + 1,
+    username: row.username,
+    points: Number(row.points)
+  }));
+}
+
+// =========================
+// API
+// =========================
+
+async function handleAPI(req, res, url) {
+  const method = req.method;
+  const userId = getSessionUserId(req);
+
+  // -------------------------
+  // REGISTER
+  // -------------------------
 
   if (
-    req.method === "GET" &&
-    pathname === "/health"
+    method === "POST" &&
+    url.pathname === "/api/register"
   ) {
-
-    json(
-      res,
-      200,
-      {
-        ok: true,
-
-        database:
-          pool
-            ? "postgresql"
-            : "memory",
-
-        time:
-          new Date().toISOString()
-      }
-    );
-
-    return;
-
-  }
-
-
-  /* ======================================
-     REGISTER
-  ====================================== */
-
-  if (
-    req.method === "POST" &&
-    pathname === "/api/register"
-  ) {
-
-    const body =
-      await parseBody(req);
-
+    const body = await readBody(req);
 
     const username =
-      normalizeUsername(
-        body.username
-      );
-
+      String(body.username || "").trim();
 
     const email =
-      normalizeEmail(
-        body.email
-      );
-
+      String(body.email || "")
+        .trim()
+        .toLowerCase();
 
     const password =
-      String(
-        body.password || ""
+      String(body.password || "");
+
+    const referralCode =
+      String(body.referralCode || "")
+        .trim()
+        .toUpperCase();
+
+    if (!validUsername(username)) {
+      throw new Error(
+        "Tên người dùng phải có 3-24 ký tự."
       );
-
-
-    if (
-      !/^[A-Za-z0-9_.-]{3,24}$/
-        .test(username)
-    ) {
-
-      json(
-        res,
-        400,
-        {
-          error:
-            "Tên đăng nhập phải dài 3–24 ký tự và chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang."
-        }
-      );
-
-      return;
-
     }
 
-
-    if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        .test(email)
-    ) {
-
-      json(
-        res,
-        400,
-        {
-          error:
-            "Email không hợp lệ."
-        }
+    if (!validEmail(email)) {
+      throw new Error(
+        "Email không hợp lệ."
       );
-
-      return;
-
     }
-
 
     if (
       password.length < 8 ||
       password.length > 72
     ) {
-
-      json(
-        res,
-        400,
-        {
-          error:
-            "Mật khẩu phải từ 8 đến 72 ký tự."
-        }
+      throw new Error(
+        "Mật khẩu phải từ 8 đến 72 ký tự."
       );
-
-      return;
-
     }
 
+    const duplicate = await pool.query(
+      `
+      SELECT id
+      FROM users
 
-    if (
-      await usernameExists(
-        username
-      )
-    ) {
+      WHERE LOWER(username) = LOWER($1)
+         OR LOWER(email) = LOWER($2)
 
-      json(
-        res,
-        409,
-        {
-          error:
-            "Tên đăng nhập đã tồn tại."
-        }
+      LIMIT 1
+      `,
+      [username, email]
+    );
+
+    if (duplicate.rows.length) {
+      throw new Error(
+        "Tên người dùng hoặc email đã tồn tại."
       );
-
-      return;
-
     }
 
+    let referredBy = null;
 
-    if (
-      await emailExists(
-        email
-      )
-    ) {
-
-      json(
-        res,
-        409,
-        {
-          error:
-            "Email đã được sử dụng."
-        }
+    if (referralCode) {
+      const ref = await pool.query(
+        `
+        SELECT id
+        FROM users
+        WHERE referral_code = $1
+        LIMIT 1
+        `,
+        [referralCode]
       );
 
-      return;
-
-    }
-
-
-    try {
-
-      const user =
-        await registerUser(
-          username,
-          email,
-          password
+      if (!ref.rows.length) {
+        throw new Error(
+          "Mã giới thiệu không hợp lệ."
         );
-
-
-      const sid =
-        createSession(
-          Number(user.id)
-        );
-
-
-      setSessionCookie(
-        res,
-        sid
-      );
-
-
-      json(
-        res,
-        201,
-        {
-          success: true,
-
-          user:
-            publicUser(user)
-        }
-      );
-
-    } catch (error) {
-
-      console.error(
-        "Register error:",
-        error
-      );
-
-
-      /*
-        PostgreSQL unique violation
-      */
-
-      if (
-        error.code === "23505"
-      ) {
-
-        json(
-          res,
-          409,
-          {
-            error:
-              "Tên đăng nhập hoặc email đã tồn tại."
-          }
-        );
-
-        return;
-
       }
 
-
-      json(
-        res,
-        500,
-        {
-          error:
-            "Không thể tạo tài khoản."
-        }
-      );
-
+      referredBy = Number(ref.rows[0].id);
     }
 
-    return;
+    const passwordData =
+      hashPassword(password);
 
+    let user;
+
+    try {
+      const result = await pool.query(
+        `
+        INSERT INTO users
+        (
+          username,
+          email,
+          password_hash,
+          password_salt,
+          referral_code,
+          referred_by
+        )
+
+        VALUES
+        ($1, $2, $3, $4, $5, $6)
+
+        RETURNING *
+        `,
+        [
+          username,
+          email,
+          passwordData.hash,
+          passwordData.salt,
+          createReferralCode(),
+          referredBy
+        ]
+      );
+
+      user = result.rows[0];
+    } catch (error) {
+      if (error.code === "23505") {
+        throw new Error(
+          "Tên người dùng hoặc email đã tồn tại."
+        );
+      }
+
+      throw error;
+    }
+
+    const sid = createSession(user.id);
+
+    setSession(res, sid);
+
+    return sendJSON(res, 201, {
+      user: publicUser(user)
+    });
   }
 
-
-  /* ======================================
-     LOGIN
-  ====================================== */
+  // -------------------------
+  // LOGIN
+  // -------------------------
 
   if (
-    req.method === "POST" &&
-    pathname === "/api/login"
+    method === "POST" &&
+    url.pathname === "/api/login"
   ) {
+    const body = await readBody(req);
 
-    const body =
-      await parseBody(req);
-
-
-    const identity =
-      String(
-        body.identity || ""
-      ).trim();
-
+    const identifier =
+      String(body.identifier || "").trim();
 
     const password =
-      String(
-        body.password || ""
-      );
-
-
-    if (
-      !identity ||
-      !password
-    ) {
-
-      json(
-        res,
-        400,
-        {
-          error:
-            "Vui lòng nhập tên đăng nhập/email và mật khẩu."
-        }
-      );
-
-      return;
-
-    }
-
+      String(body.password || "");
 
     const user =
-      await findUserByIdentity(
-        identity
-      );
+      await getUserByLogin(identifier);
 
-
-    if (!user) {
-
-      json(
-        res,
-        401,
-        {
-          error:
-            "Tài khoản hoặc mật khẩu không đúng."
-        }
-      );
-
-      return;
-
-    }
-
-
-    const valid =
-      verifyPassword(
+    if (
+      !user ||
+      !verifyPassword(
         password,
         user.password_hash,
         user.password_salt
+      )
+    ) {
+      throw new Error(
+        "Tài khoản hoặc mật khẩu không đúng."
       );
-
-
-    if (!valid) {
-
-      json(
-        res,
-        401,
-        {
-          error:
-            "Tài khoản hoặc mật khẩu không đúng."
-        }
-      );
-
-      return;
-
     }
 
+    const sid = createSession(user.id);
 
-    const sid =
-      createSession(
-        Number(user.id)
-      );
+    setSession(res, sid);
 
-
-    setSessionCookie(
-      res,
-      sid
-    );
-
-
-    json(
-      res,
-      200,
-      {
-        success: true,
-
-        user:
-          publicUser(user)
-      }
-    );
-
-    return;
-
+    return sendJSON(res, 200, {
+      user: publicUser(user)
+    });
   }
 
-
-  /* ======================================
-     LOGOUT
-  ====================================== */
+  // -------------------------
+  // LOGOUT
+  // -------------------------
 
   if (
-    req.method === "POST" &&
-    pathname === "/api/logout"
+    method === "POST" &&
+    url.pathname === "/api/logout"
   ) {
+    const cookies = parseCookies(req);
 
-    const cookie =
-      req.headers.cookie || "";
-
-
-    const match =
-      cookie.match(
-        /(?:^|;\s*)sid=([^;]+)/
-      );
-
-
-    if (match) {
-
-      const sid =
-        decodeURIComponent(
-          match[1]
-        );
-
-      sessions.delete(sid);
-
+    if (cookies.sid) {
+      sessions.delete(cookies.sid);
     }
 
+    clearSession(res);
 
-    clearSessionCookie(res);
-
-
-    json(
-      res,
-      200,
-      {
-        success: true
-      }
-    );
-
-    return;
-
+    return sendJSON(res, 200, {
+      ok: true
+    });
   }
 
-
-  /* ======================================
-     ME
-  ====================================== */
+  // -------------------------
+  // ME
+  // -------------------------
 
   if (
-    req.method === "GET" &&
-    pathname === "/api/me"
+    method === "GET" &&
+    url.pathname === "/api/me"
   ) {
+    if (!userId) {
+      return sendJSON(res, 200, {
+        user: null
+      });
+    }
 
     const user =
-      await requireUser(
-        req,
-        res
-      );
+      await getUserById(userId);
 
-
-    if (!user) {
-
-      return;
-
-    }
-
-
-    json(
-      res,
-      200,
-      {
-        user:
-          publicUser(user)
-      }
-    );
-
-    return;
-
+    return sendJSON(res, 200, {
+      user: publicUser(user)
+    });
   }
 
-
-  /* ======================================
-     DASHBOARD
-  ====================================== */
-
-  if (
-    req.method === "GET" &&
-    pathname === "/api/dashboard"
-  ) {
-
-    const user =
-      await requireUser(
-        req,
-        res
-      );
-
-
-    if (!user) {
-
-      return;
-
-    }
-
-
-    const dashboard =
-      await getDashboard(
-        Number(user.id)
-      );
-
-
-    json(
-      res,
-      200,
-      dashboard
+  // Những API dưới đây cần đăng nhập
+  if (!userId) {
+    throw new Error(
+      "Bạn cần đăng nhập."
     );
-
-    return;
-
   }
 
-
-  /* ======================================
-     RANDOM TASKS
-  ====================================== */
+  // -------------------------
+  // DASHBOARD
+  // -------------------------
 
   if (
-    req.method === "GET" &&
-    pathname === "/api/tasks/random"
+    method === "GET" &&
+    url.pathname === "/api/dashboard"
   ) {
-
-    const userId =
-      getSessionUserId(req);
-
-
-    const tasks =
-      await getRandomTasks(
-        userId
-      );
-
-
-    json(
-      res,
-      200,
-      {
-        tasks
-      }
-    );
-
-    return;
-
+    return sendJSON(res, 200, {
+      dashboard:
+        await getDashboard(userId)
+    });
   }
 
-
-  /* ======================================
-     COMPLETE TASK
-  ====================================== */
+  // -------------------------
+  // RANDOM TASKS
+  // -------------------------
 
   if (
-    req.method === "POST" &&
-    pathname === "/api/tasks/complete"
+    method === "GET" &&
+    url.pathname === "/api/tasks/random"
   ) {
+    return sendJSON(res, 200, {
+      tasks:
+        await getRandomTasks(userId)
+    });
+  }
 
-    const user =
-      await requireUser(
-        req,
-        res
-      );
+  // -------------------------
+  // COMPLETE TASK
+  // -------------------------
 
+  if (
+    method === "POST" &&
+    url.pathname === "/api/tasks/complete"
+  ) {
+    const body = await readBody(req);
 
-    if (!user) {
-
-      return;
-
-    }
-
-
-    const body =
-      await parseBody(req);
-
-
-    const taskId =
-      Number(
-        body.taskId
-      );
-
+    const taskId = Number(body.taskId);
 
     if (
       !Number.isInteger(taskId) ||
       taskId <= 0
     ) {
-
-      json(
-        res,
-        400,
-        {
-          error:
-            "taskId không hợp lệ."
-        }
+      throw new Error(
+        "Task ID không hợp lệ."
       );
-
-      return;
-
     }
 
-
-    try {
-
-      const result =
-        await completeTask(
-          Number(user.id),
-          taskId
-        );
-
-
-      json(
-        res,
-        200,
-        result
-      );
-
-    } catch (error) {
-
-      json(
-        res,
-        400,
-        {
-          error:
-            error.message ||
-            "Không thể hoàn thành nhiệm vụ."
-        }
-      );
-
-    }
-
-    return;
-
-  }
-
-
-  /* ======================================
-     LEADERBOARD
-  ====================================== */
-
-  if (
-    req.method === "GET" &&
-    pathname === "/api/leaderboard"
-  ) {
-
-    const period =
-      parsedUrl.searchParams.get(
-        "period"
-      ) || "day";
-
-
-    if (
-      period !== "day" &&
-      period !== "week"
-    ) {
-
-      json(
-        res,
-        400,
-        {
-          error:
-            "period phải là day hoặc week."
-        }
-      );
-
-      return;
-
-    }
-
-
-    const users =
-      await getLeaderboard(
-        period
-      );
-
-
-    json(
+    return sendJSON(
       res,
       200,
-      {
-        period,
-        users
-      }
+      await completeTask(
+        userId,
+        taskId
+      )
     );
-
-    return;
-
   }
 
+  // -------------------------
+  // LEADERBOARD
+  // -------------------------
 
-  /* ======================================
-     404
-  ====================================== */
+  if (
+    method === "GET" &&
+    url.pathname === "/api/leaderboard"
+  ) {
+    const period =
+      url.searchParams.get("period") ===
+      "week"
+        ? "week"
+        : "day";
 
-  json(
-    res,
-    404,
-    {
-      error:
-        "Không tìm thấy API."
-    }
+    return sendJSON(res, 200, {
+      leaderboard:
+        await getLeaderboard(period),
+
+      period
+    });
+  }
+
+  // -------------------------
+  // CHECKIN STATUS
+  // -------------------------
+
+  if (
+    method === "GET" &&
+    url.pathname === "/api/checkin/status"
+  ) {
+    return sendJSON(
+      res,
+      200,
+      await getCheckinStatus(userId)
+    );
+  }
+
+  // -------------------------
+  // CHECKIN
+  // -------------------------
+
+  if (
+    method === "POST" &&
+    url.pathname === "/api/checkin"
+  ) {
+    return sendJSON(
+      res,
+      200,
+      await doCheckin(userId)
+    );
+  }
+
+  // -------------------------
+  // REFERRAL
+  // -------------------------
+
+  if (
+    method === "GET" &&
+    url.pathname === "/api/referral"
+  ) {
+    const user =
+      await getUserById(userId);
+
+    const host =
+      req.headers.host;
+
+    const protocol =
+      req.headers["x-forwarded-proto"] ||
+      "https";
+
+    const link =
+      `${protocol}://${host}/?ref=${encodeURIComponent(
+        user.referral_code
+      )}`;
+
+    return sendJSON(res, 200, {
+      code: user.referral_code,
+
+      link,
+
+      threshold:
+        REFERRAL_THRESHOLD,
+
+      reward:
+        REFERRAL_REWARD,
+
+      referred_count:
+        Number(user.referred_count || 0),
+
+      earned:
+        Number(user.referral_earned || 0)
+    });
+  }
+
+  throw new Error(
+    "API không tồn tại."
   );
-
 }
 
+// =========================
+// SERVER
+// =========================
 
-/* =========================================================
-   SERVER
-========================================================= */
-
-const server =
-  http.createServer(
-    async (req, res) => {
-
-      try {
-
-        await handleRequest(
-          req,
-          res
-        );
-
-      } catch (error) {
-
-        console.error(
-          "Server error:",
-          error
-        );
-
-
-        if (!res.headersSent) {
-
-          json(
-            res,
-            500,
-            {
-              error:
-                "Lỗi máy chủ."
-            }
-          );
-
-        }
-
-      }
-
-    }
+async function handleRequest(req, res) {
+  const url = new URL(
+    req.url,
+    `http://${req.headers.host || "localhost"}`
   );
 
+  // Health check
+  if (url.pathname === "/health") {
+    return sendJSON(res, 200, {
+      ok: true,
+      database: !!pool
+    });
+  }
 
-/* =========================================================
-   START
-========================================================= */
+  // API
+  if (url.pathname.startsWith("/api/")) {
+    try {
+      return await handleAPI(
+        req,
+        res,
+        url
+      );
+    } catch (error) {
+      console.error(
+        "API ERROR:",
+        error
+      );
+
+      const status =
+        error.message ===
+        "Bạn cần đăng nhập."
+          ? 401
+          : 400;
+
+      return sendJSON(res, status, {
+        error:
+          error.message ||
+          "Server error."
+      });
+    }
+  }
+
+  // Static files
+  if (
+    req.method !== "GET" &&
+    req.method !== "HEAD"
+  ) {
+    return sendText(
+      res,
+      405,
+      "Method Not Allowed"
+    );
+  }
+
+  let filePath =
+    path.join(
+      __dirname,
+      "index.html"
+    );
+
+  if (
+    url.pathname !== "/" &&
+    url.pathname !== "/index.html"
+  ) {
+    const requested =
+      path.join(
+        __dirname,
+        url.pathname.replace(/^\/+/, "")
+      );
+
+    if (
+      fs.existsSync(requested) &&
+      fs.statSync(requested).isFile()
+    ) {
+      filePath = requested;
+    }
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return sendText(
+      res,
+      404,
+      "Cannot GET /"
+    );
+  }
+
+  const ext =
+    path.extname(filePath).toLowerCase();
+
+  const contentTypes = {
+    ".html":
+      "text/html; charset=utf-8",
+    ".css":
+      "text/css; charset=utf-8",
+    ".js":
+      "application/javascript; charset=utf-8",
+    ".json":
+      "application/json; charset=utf-8",
+    ".png":
+      "image/png",
+    ".jpg":
+      "image/jpeg",
+    ".jpeg":
+      "image/jpeg",
+    ".svg":
+      "image/svg+xml"
+  };
+
+  res.writeHead(200, {
+    "Content-Type":
+      contentTypes[ext] ||
+      "application/octet-stream"
+  });
+
+  fs.createReadStream(
+    filePath
+  ).pipe(res);
+}
+
+// =========================
+// START
+// =========================
 
 async function start() {
-
   try {
-
     await initDatabase();
 
+    const server =
+      http.createServer(
+        handleRequest
+      );
 
     server.listen(
       PORT,
       HOST,
       () => {
-
         console.log(
-          `Nhiem Vu Diem running on ${HOST}:${PORT}`
+          `Server running on ${HOST}:${PORT}`
         );
-
       }
     );
-
   } catch (error) {
-
     console.error(
-      "Database initialization failed:",
+      "SERVER START ERROR:",
       error
     );
 
-
-    /*
-      Không để Render chết ngay nếu
-      PostgreSQL đang cấu hình sai.
-    */
-
-    server.listen(
-      PORT,
-      HOST,
-      () => {
-
-        console.log(
-          `Server started on ${HOST}:${PORT} without database.`
-        );
-
-      }
-    );
-
+    process.exit(1);
   }
-
 }
-
 
 start();
