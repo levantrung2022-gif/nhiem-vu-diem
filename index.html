@@ -1,1093 +1,3239 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nhiệm Vụ Điểm</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
+  <title>Nhiệm Vụ Điểm</title>
 
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:#f5f7fb;
-  color:#172033;
-  padding-bottom:80px;
-}
+  <meta
+    name="description"
+    content="Nhiệm Vụ Điểm - khám phá nhiệm vụ, tích điểm và theo dõi bảng xếp hạng."
+  >
 
-button{
-  border:0;
-  cursor:pointer;
-  font-family:inherit;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-.header{
-  background:linear-gradient(135deg,#6d5dfc,#8b5cf6);
-  color:white;
-  padding:22px 18px 30px;
-  border-radius:0 0 28px 28px;
-}
+    :root {
+      --bg: #0b0b12;
+      --card: #151521;
+      --card2: #1b1b2a;
+      --border: rgba(255,255,255,.08);
+      --text: #ffffff;
+      --muted: #9b9bad;
+      --primary: #7c4dff;
+      --primary2: #a66bff;
+      --green: #31d17c;
+      --red: #ff5f6d;
+      --yellow: #ffc857;
+    }
 
-.header-inner{
-  max-width:1000px;
-  margin:auto;
-}
+    html {
+      scroll-behavior: smooth;
+    }
 
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:25px;
-}
+    body {
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-.logo{
-  font-size:22px;
-  font-weight:800;
-}
+      background:
+        radial-gradient(
+          circle at top left,
+          rgba(124,77,255,.18),
+          transparent 35%
+        ),
+        var(--bg);
 
-.user{
-  background:rgba(255,255,255,.18);
-  padding:9px 14px;
-  border-radius:30px;
-}
+      color: var(--text);
+      min-height: 100vh;
+    }
 
-.balance{
-  background:white;
-  color:#172033;
-  padding:20px;
-  border-radius:20px;
-  box-shadow:0 12px 30px rgba(0,0,0,.12);
-}
+    button,
+    input {
+      font: inherit;
+    }
 
-.balance small{
-  color:#737b8c;
-}
+    button {
+      cursor: pointer;
+    }
 
-.points{
-  font-size:36px;
-  font-weight:800;
-  margin-top:5px;
-}
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-.container{
-  max-width:1000px;
-  margin:auto;
-  padding:20px 15px;
-}
+    .container {
+      width: min(1120px, calc(100% - 32px));
+      margin: auto;
+    }
 
-.nav{
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-  margin-bottom:20px;
-}
+    /* =========================
+       HEADER
+    ========================== */
 
-.nav button{
-  white-space:nowrap;
-  padding:12px 18px;
-  border-radius:12px;
-  background:white;
-  color:#596174;
-  font-weight:700;
-}
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
 
-.nav button.active{
-  background:#6d5dfc;
-  color:white;
-}
+      background: rgba(11,11,18,.86);
+      backdrop-filter: blur(18px);
 
-.page{
-  display:none;
-}
+      border-bottom: 1px solid var(--border);
+    }
 
-.page.active{
-  display:block;
-}
+    .header-inner {
+      min-height: 72px;
 
-.section-title{
-  font-size:22px;
-  margin-bottom:15px;
-}
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
 
-.stats{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-bottom:22px;
-}
+      gap: 20px;
+    }
 
-.stat{
-  background:white;
-  padding:18px;
-  border-radius:18px;
-  box-shadow:0 4px 16px rgba(20,30,50,.06);
-}
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
 
-.stat-icon{
-  font-size:25px;
-}
+      font-size: 19px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
 
-.stat-number{
-  font-size:25px;
-  font-weight:800;
-  margin-top:7px;
-}
+    .logo-icon {
+      width: 38px;
+      height: 38px;
 
-.stat-label{
-  color:#7b8393;
-  font-size:13px;
-  margin-top:3px;
-}
+      display: grid;
+      place-items: center;
 
-.task-list{
-  display:grid;
-  gap:14px;
-}
+      border-radius: 12px;
 
-.task{
-  background:white;
-  padding:18px;
-  border-radius:20px;
-  box-shadow:0 5px 18px rgba(20,30,50,.07);
-}
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary2)
+        );
 
-.task-top{
-  display:flex;
-  justify-content:space-between;
-  gap:15px;
-}
+      box-shadow:
+        0 8px 30px rgba(124,77,255,.3);
+    }
 
-.task-title{
-  font-size:17px;
-  font-weight:800;
-}
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
 
-.task-channel{
-  color:#727b8c;
-  margin-top:5px;
-  font-size:14px;
-}
+    nav button {
+      border: 0;
+      background: transparent;
 
-.reward{
-  color:#6d5dfc;
-  font-weight:800;
-  white-space:nowrap;
-}
+      color: var(--muted);
 
-.task-actions{
-  display:flex;
-  gap:8px;
-  margin-top:15px;
-}
+      padding: 10px 14px;
+      border-radius: 10px;
 
-.btn{
-  padding:11px 16px;
-  border-radius:11px;
-  font-weight:700;
-}
+      transition: .2s;
+    }
 
-.btn-primary{
-  background:#6d5dfc;
-  color:white;
-}
+    nav button:hover,
+    nav button.active {
+      color: white;
+      background: rgba(124,77,255,.13);
+    }
 
-.btn-secondary{
-  background:#eef0f7;
-  color:#4d5668;
-}
+    .login-header {
+      border: 0;
+      color: white;
 
-.btn-success{
-  background:#16a34a;
-  color:white;
-}
+      padding: 11px 17px;
+      border-radius: 11px;
 
-.btn:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary2)
+        );
 
-.rank-card{
-  background:white;
-  border-radius:20px;
-  overflow:hidden;
-  box-shadow:0 5px 18px rgba(20,30,50,.07);
-}
+      font-weight: 700;
+    }
 
-.rank-tabs{
-  display:flex;
-  padding:8px;
-  background:#f0f1f7;
-}
+    /* =========================
+       MAIN
+    ========================== */
 
-.rank-tabs button{
-  flex:1;
-  padding:12px;
-  background:transparent;
-  border-radius:10px;
-  font-weight:700;
-}
+    main {
+      padding: 40px 0 70px;
+    }
 
-.rank-tabs button.active{
-  background:white;
-  color:#6d5dfc;
-}
+    .page {
+      display: none;
+    }
 
-.rank-row{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:16px;
-  border-bottom:1px solid #edf0f5;
-}
+    .page.active {
+      display: block;
+    }
 
-.rank-number{
-  width:35px;
-  text-align:center;
-  font-size:20px;
-  font-weight:800;
-}
+    /* =========================
+       HERO
+    ========================== */
 
-.avatar{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#eeeaff;
-  color:#6d5dfc;
-  font-weight:800;
-}
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr .7fr;
 
-.rank-name{
-  flex:1;
-  font-weight:700;
-}
+      gap: 24px;
+      margin-bottom: 24px;
+    }
 
-.rank-points{
-  font-weight:800;
-}
+    .hero-main {
+      position: relative;
+      overflow: hidden;
 
-.profile{
-  background:white;
-  padding:25px;
-  border-radius:22px;
-  box-shadow:0 5px 18px rgba(20,30,50,.07);
-}
+      min-height: 270px;
 
-.profile-avatar{
-  width:75px;
-  height:75px;
-  border-radius:50%;
-  background:#6d5dfc;
-  color:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:28px;
-  font-weight:800;
-  margin-bottom:15px;
-}
+      padding: 40px;
 
-.input{
-  width:100%;
-  padding:13px;
-  border:1px solid #dfe3eb;
-  border-radius:11px;
-  margin:8px 0 14px;
-  outline:none;
-}
+      border: 1px solid var(--border);
+      border-radius: 24px;
 
-.input:focus{
-  border-color:#6d5dfc;
-}
+      background:
+        radial-gradient(
+          circle at 80% 20%,
+          rgba(166,107,255,.25),
+          transparent 35%
+        ),
+        linear-gradient(
+          135deg,
+          #171425,
+          #12121b
+        );
+    }
 
-.empty{
-  background:white;
-  padding:30px;
-  text-align:center;
-  border-radius:18px;
-  color:#7b8393;
-}
+    .hero-main h1 {
+      max-width: 620px;
 
-.notice{
-  background:#fff8df;
-  border:1px solid #f5df8a;
-  padding:15px;
-  border-radius:15px;
-  margin-bottom:18px;
-  line-height:1.5;
-}
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.05;
 
-.history{
-  margin-top:20px;
-}
+      margin-bottom: 16px;
+    }
 
-.history-item{
-  padding:13px 0;
-  border-bottom:1px solid #edf0f5;
-  display:flex;
-  justify-content:space-between;
-}
+    .hero-main h1 span {
+      color: var(--primary2);
+    }
 
-.bottom{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:white;
-  border-top:1px solid #e7eaf0;
-  padding:10px;
-  display:flex;
-  justify-content:center;
-  z-index:10;
-}
+    .hero-main p {
+      max-width: 600px;
 
-.bottom-inner{
-  width:100%;
-  max-width:700px;
-  display:flex;
-  justify-content:space-around;
-}
+      color: var(--muted);
+      line-height: 1.7;
 
-.bottom button{
-  background:none;
-  color:#737b8c;
-  font-size:12px;
-}
+      margin-bottom: 26px;
+    }
 
-.bottom button.active{
-  color:#6d5dfc;
-  font-weight:800;
-}
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
 
-@media(max-width:650px){
-  .stats{
-    grid-template-columns:1fr;
-  }
+    .btn-primary {
+      border: 0;
 
-  .top{
-    align-items:flex-start;
-  }
+      padding: 13px 19px;
+      border-radius: 12px;
 
-  .task-top{
-    flex-direction:column;
-    gap:6px;
-  }
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary2)
+        );
 
-  .reward{
-    align-self:flex-start;
-  }
-}
-</style>
+      color: white;
+      font-weight: 700;
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--border);
+
+      padding: 13px 19px;
+      border-radius: 12px;
+
+      background: rgba(255,255,255,.04);
+      color: white;
+    }
+
+    .main-channel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
+      padding: 28px;
+
+      border-radius: 24px;
+      border: 1px solid var(--border);
+
+      background: var(--card);
+    }
+
+    .channel-label {
+      color: var(--muted);
+      font-size: 13px;
+
+      margin-bottom: 13px;
+    }
+
+    .channel-name {
+      font-size: 25px;
+      font-weight: 800;
+
+      margin-bottom: 8px;
+    }
+
+    .channel-url {
+      color: var(--primary2);
+      font-size: 14px;
+
+      margin-bottom: 22px;
+
+      word-break: break-all;
+    }
+
+    /* =========================
+       STATS
+    ========================== */
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+
+      gap: 15px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      padding: 22px;
+
+      background: var(--card);
+
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    .stat-title {
+      color: var(--muted);
+      font-size: 13px;
+
+      margin-bottom: 9px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .stat-value.points {
+      color: var(--yellow);
+    }
+
+    /* =========================
+       SECTION
+    ========================== */
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 15px;
+
+      margin-bottom: 15px;
+    }
+
+    .section-title h2 {
+      font-size: 22px;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card {
+      background: var(--card);
+
+      border: 1px solid var(--border);
+      border-radius: 20px;
+
+      overflow: hidden;
+    }
+
+    /* =========================
+       TASK
+    ========================== */
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .task {
+      padding: 20px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 20px;
+
+      background: var(--card);
+
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      min-width: 0;
+    }
+
+    .task-icon {
+      flex: 0 0 48px;
+
+      width: 48px;
+      height: 48px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 14px;
+
+      background: rgba(124,77,255,.15);
+
+      font-size: 22px;
+    }
+
+    .task-info {
+      min-width: 0;
+    }
+
+    .task-info h3 {
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+
+    .task-info p {
+      color: var(--muted);
+      font-size: 13px;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .task-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .points-badge {
+      color: var(--yellow);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .task-btn {
+      border: 0;
+
+      padding: 10px 15px;
+      border-radius: 10px;
+
+      background: rgba(124,77,255,.16);
+      color: white;
+
+      font-weight: 700;
+    }
+
+    .task-btn:hover {
+      background: var(--primary);
+    }
+
+    .task-btn.done {
+      background: rgba(49,209,124,.12);
+      color: var(--green);
+      cursor: default;
+    }
+
+    /* =========================
+       RANKING
+    ========================== */
+
+    .ranking-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .ranking-tab {
+      border: 1px solid var(--border);
+
+      background: var(--card);
+
+      color: var(--muted);
+
+      padding: 10px 17px;
+      border-radius: 10px;
+    }
+
+    .ranking-tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .ranking-row {
+      display: grid;
+      grid-template-columns: 55px 1fr 100px 100px;
+
+      align-items: center;
+
+      gap: 10px;
+
+      padding: 17px 20px;
+
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ranking-row:last-child {
+      border-bottom: 0;
+    }
+
+    .rank-number {
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .rank-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 50%;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary2)
+        );
+
+      font-weight: 800;
+    }
+
+    .rank-points {
+      color: var(--yellow);
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .rank-reward {
+      color: var(--green);
+      font-weight: 800;
+      text-align: right;
+    }
+
+    /* =========================
+       ACCOUNT
+    ========================== */
+
+    .account-box {
+      padding: 28px;
+    }
+
+    .account-head {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+
+      margin-bottom: 24px;
+    }
+
+    .account-avatar {
+      width: 65px;
+      height: 65px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 20px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary2)
+        );
+
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .account-head h2 {
+      margin-bottom: 5px;
+    }
+
+    .account-head p {
+      color: var(--muted);
+    }
+
+    .account-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .logout-btn {
+      border: 1px solid rgba(255,95,109,.25);
+
+      background: rgba(255,95,109,.08);
+
+      color: var(--red);
+
+      padding: 11px 17px;
+      border-radius: 10px;
+
+      font-weight: 700;
+    }
+
+    /* =========================
+       EMPTY / LOGIN
+    ========================== */
+
+    .login-card {
+      text-align: center;
+      padding: 55px 25px;
+    }
+
+    .login-card .big-icon {
+      font-size: 50px;
+      margin-bottom: 15px;
+    }
+
+    .login-card h2 {
+      margin-bottom: 8px;
+    }
+
+    .login-card p {
+      color: var(--muted);
+      margin-bottom: 22px;
+    }
+
+    /* =========================
+       MODAL
+    ========================== */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+
+      z-index: 1000;
+
+      display: none;
+      align-items: center;
+      justify-content: center;
+
+      padding: 20px;
+
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-box {
+      width: min(450px, 100%);
+
+      position: relative;
+
+      padding: 28px;
+
+      background: #151521;
+
+      border: 1px solid var(--border);
+      border-radius: 22px;
+
+      box-shadow: 0 25px 80px rgba(0,0,0,.5);
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 18px;
+      top: 16px;
+
+      width: 34px;
+      height: 34px;
+
+      border: 0;
+      border-radius: 50%;
+
+      background: rgba(255,255,255,.06);
+      color: white;
+
+      font-size: 20px;
+    }
+
+    .modal-title {
+      font-size: 25px;
+      margin-bottom: 7px;
+    }
+
+    .modal-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+
+      margin-bottom: 22px;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+
+      gap: 5px;
+
+      padding: 5px;
+
+      border-radius: 12px;
+
+      background: rgba(255,255,255,.04);
+
+      margin-bottom: 20px;
+    }
+
+    .auth-tab {
+      border: 0;
+
+      padding: 11px;
+
+      border-radius: 9px;
+
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .auth-tab.active {
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+
+      font-size: 13px;
+      font-weight: 700;
+
+      margin-bottom: 7px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .form-group input {
+      width: 100%;
+
+      padding: 13px 14px;
+
+      border-radius: 11px;
+
+      border: 1px solid var(--border);
+
+      outline: none;
+
+      background: rgba(255,255,255,.045);
+      color: white;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary);
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+
+      transform: translateY(-50%);
+
+      border: 0;
+      background: transparent;
+
+      color: var(--muted);
+
+      padding: 7px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+
+      color: var(--muted);
+
+      font-size: 12px;
+
+      margin: 5px 0 18px;
+    }
+
+    .checkbox-row input {
+      margin-top: 2px;
+    }
+
+    .auth-submit {
+      width: 100%;
+
+      border: 0;
+
+      padding: 13px;
+
+      border-radius: 11px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary2)
+        );
+
+      color: white;
+
+      font-weight: 800;
+    }
+
+    .auth-submit:disabled {
+      opacity: .6;
+      cursor: wait;
+    }
+
+    .auth-error {
+      display: none;
+
+      padding: 10px 12px;
+
+      border-radius: 10px;
+
+      background: rgba(255,95,109,.1);
+
+      color: #ff8892;
+
+      font-size: 13px;
+
+      margin-bottom: 14px;
+    }
+
+    .auth-error.show {
+      display: block;
+    }
+
+    .auth-footer {
+      text-align: center;
+
+      color: var(--muted);
+
+      font-size: 13px;
+
+      margin-top: 18px;
+    }
+
+    .auth-link {
+      border: 0;
+      background: transparent;
+
+      color: var(--primary2);
+
+      font-weight: 700;
+    }
+
+    /* =========================
+       TOAST
+    ========================== */
+
+    .toast {
+      position: fixed;
+
+      right: 20px;
+      bottom: 20px;
+
+      z-index: 2000;
+
+      min-width: 250px;
+
+      padding: 14px 17px;
+
+      border-radius: 12px;
+
+      background: #20202d;
+      border: 1px solid var(--border);
+
+      box-shadow: 0 15px 40px rgba(0,0,0,.35);
+
+      transform: translateY(100px);
+      opacity: 0;
+
+      transition: .25s;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      border-color: rgba(49,209,124,.3);
+    }
+
+    .toast.error {
+      border-color: rgba(255,95,109,.3);
+    }
+
+    /* =========================
+       MOBILE
+    ========================== */
+
+    @media (max-width: 850px) {
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        display: none;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-main {
+        padding: 28px;
+      }
+
+      .ranking-row {
+        grid-template-columns: 45px 1fr 80px;
+      }
+
+      .rank-reward {
+        display: none;
+      }
+    }
+
+    @media (max-width: 560px) {
+
+      .container {
+        width: min(100% - 20px, 1120px);
+      }
+
+      main {
+        padding-top: 22px;
+      }
+
+      .header-inner {
+        min-height: 64px;
+      }
+
+      .logo {
+        font-size: 16px;
+      }
+
+      .logo-icon {
+        width: 34px;
+        height: 34px;
+      }
+
+      .login-header {
+        padding: 9px 12px;
+        font-size: 13px;
+      }
+
+      .hero-main {
+        min-height: auto;
+        padding: 25px 20px;
+      }
+
+      .hero-main h1 {
+        font-size: 34px;
+      }
+
+      .main-channel {
+        padding: 22px;
+      }
+
+      .task {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .task-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .task-btn {
+        flex: 1;
+      }
+
+      .ranking-row {
+        grid-template-columns: 38px 1fr 75px;
+        padding: 15px;
+      }
+
+      .rank-user {
+        min-width: 0;
+      }
+
+      .rank-user span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<header class="header">
-  <div class="header-inner">
+<!-- =========================
+     HEADER
+========================== -->
 
-    <div class="top">
-      <div class="logo">⭐ Nhiệm Vụ Điểm</div>
-      <div class="user" id="headerUser">@nguoidung</div>
-    </div>
+<header>
+  <div class="container header-inner">
 
-    <div class="balance">
-      <small>Số điểm của bạn</small>
-      <div class="points" id="points">0</div>
-      <small>điểm</small>
-    </div>
+    <a href="#" class="logo" onclick="showPage('home'); return false;">
+      <div class="logo-icon">⭐</div>
+      <span>Nhiệm Vụ Điểm</span>
+    </a>
+
+    <nav>
+      <button class="nav-btn active"
+              data-page="home"
+              onclick="showPage('home')">
+        Trang chủ
+      </button>
+
+      <button class="nav-btn"
+              data-page="tasks"
+              onclick="showPage('tasks')">
+        Nhiệm vụ
+      </button>
+
+      <button class="nav-btn"
+              data-page="ranking"
+              onclick="showPage('ranking')">
+        Xếp hạng
+      </button>
+
+      <button class="nav-btn"
+              data-page="account"
+              onclick="showPage('account')">
+        Tài khoản
+      </button>
+    </nav>
+
+    <button
+      class="login-header"
+      id="headerAuthButton"
+      onclick="openAuth()">
+      Đăng nhập
+    </button>
 
   </div>
 </header>
 
-<main class="container">
 
-  <nav class="nav">
-    <button class="active" onclick="showPage('home',this)">🏠 Trang chủ</button>
-    <button onclick="showPage('tasks',this)">🎯 Nhiệm vụ</button>
-    <button onclick="showPage('ranking',this)">🏆 Xếp hạng</button>
-    <button onclick="showPage('profile',this)">👤 Tài khoản</button>
-  </nav>
+<!-- =========================
+     MAIN
+========================== -->
 
-  <!-- TRANG CHỦ -->
-  <section id="home" class="page active">
+<main>
 
-    <div class="notice">
-      🎯 <b>Chào mừng đến Nhiệm Vụ Điểm!</b><br>
-      Chọn nhiệm vụ, mở TikTok để thực hiện và quay lại xác nhận hoàn thành.
-    </div>
+<div class="container">
 
-    <div class="stats">
 
-      <div class="stat">
-        <div class="stat-icon">⭐</div>
-        <div class="stat-number" id="statPoints">0</div>
-        <div class="stat-label">Điểm hiện tại</div>
+<!-- =========================
+     HOME
+========================== -->
+
+<section id="page-home" class="page active">
+
+  <div class="hero">
+
+    <div class="hero-main">
+
+      <h1>
+        Khám phá nhiệm vụ.<br>
+        <span>Tích điểm mỗi ngày.</span>
+      </h1>
+
+      <p>
+        Tham gia các nhiệm vụ cộng đồng một cách chủ động,
+        hoàn thành nhiệm vụ và tích điểm để cạnh tranh trên
+        bảng xếp hạng ngày và tuần.
+      </p>
+
+      <div class="hero-buttons">
+
+        <button
+          class="btn-primary"
+          onclick="showPage('tasks')">
+          🎯 Xem nhiệm vụ
+        </button>
+
+        <button
+          class="btn-secondary"
+          onclick="showPage('ranking')">
+          🏆 Xem xếp hạng
+        </button>
+
       </div>
 
-      <div class="stat">
-        <div class="stat-icon">✅</div>
-        <div class="stat-number" id="statCompleted">0</div>
-        <div class="stat-label">Đã hoàn thành</div>
+    </div>
+
+
+    <div class="main-channel">
+
+      <div class="channel-label">
+        ⭐ KÊNH CHÍNH
       </div>
 
-      <div class="stat">
-        <div class="stat-icon">🎯</div>
-        <div class="stat-number" id="statAvailable">0</div>
-        <div class="stat-label">Nhiệm vụ có sẵn</div>
+      <div class="channel-name">
+        @uyn.uyn2229
       </div>
 
-    </div>
-
-    <h2 class="section-title">🔥 Nhiệm vụ đề xuất</h2>
-
-    <div id="homeTasks" class="task-list"></div>
-
-  </section>
-
-  <!-- NHIỆM VỤ -->
-  <section id="tasks" class="page">
-
-    <h2 class="section-title">🎯 Nhiệm vụ hôm nay</h2>
-
-    <div class="notice">
-      Bạn tự thực hiện nhiệm vụ trên TikTok. Sau khi hoàn thành, quay lại đây và bấm xác nhận.
-    </div>
-
-    <div id="taskList" class="task-list"></div>
-
-  </section>
-
-  <!-- XẾP HẠNG -->
-  <section id="ranking" class="page">
-
-    <h2 class="section-title">🏆 Bảng xếp hạng</h2>
-
-    <div class="rank-card">
-
-      <div class="rank-tabs">
-        <button class="active" onclick="rankingType('day',this)">Hôm nay</button>
-        <button onclick="rankingType('week',this)">Tuần này</button>
+      <div class="channel-url">
+        TikTok
       </div>
 
-      <div id="rankingList"></div>
-
-    </div>
-
-    <div class="notice" style="margin-top:15px">
-      🎁 <b>Thưởng bảng xếp hạng</b><br>
-      Ngày: Hạng 1 = 50 điểm · Hạng 2 = 30 điểm · Hạng 3 = 20 điểm<br>
-      Tuần: Hạng 1 = 150 điểm · Hạng 2 = 100 điểm · Hạng 3 = 50 điểm
-    </div>
-
-  </section>
-
-  <!-- TÀI KHOẢN -->
-  <section id="profile" class="page">
-
-    <h2 class="section-title">👤 Tài khoản</h2>
-
-    <div class="profile">
-
-      <div class="profile-avatar" id="profileAvatar">N</div>
-
-      <h2 id="profileName">@nguoidung</h2>
-
-      <label>Tên hiển thị</label>
-      <input class="input" id="nameInput" placeholder="@tennguoidung">
-
-      <button class="btn btn-primary" onclick="saveName()">
-        💾 Lưu tài khoản
+      <button
+        class="btn-primary"
+        onclick="openMainChannel()">
+        Mở kênh TikTok
       </button>
 
-      <div class="history">
+    </div>
 
-        <h3>Lịch sử nhiệm vụ</h3>
+  </div>
 
-        <div id="historyList"></div>
 
+  <!-- STATS -->
+
+  <div class="stats">
+
+    <div class="stat-card">
+
+      <div class="stat-title">
+        Điểm của bạn
+      </div>
+
+      <div
+        class="stat-value points"
+        id="homePoints">
+        0
       </div>
 
     </div>
 
-  </section>
 
-</main>
+    <div class="stat-card">
 
-<div class="bottom">
-  <div class="bottom-inner">
+      <div class="stat-title">
+        Đã hoàn thành
+      </div>
 
-    <button class="active" onclick="showPage('home')">
-      🏠<br>Trang chủ
-    </button>
+      <div
+        class="stat-value"
+        id="homeCompleted">
+        0
+      </div>
 
-    <button onclick="showPage('tasks')">
-      🎯<br>Nhiệm vụ
-    </button>
+    </div>
 
-    <button onclick="showPage('ranking')">
-      🏆<br>Xếp hạng
-    </button>
 
-    <button onclick="showPage('profile')">
-      👤<br>Tài khoản
+    <div class="stat-card">
+
+      <div class="stat-title">
+        Hoàn thành hôm nay
+      </div>
+
+      <div
+        class="stat-value"
+        id="homeToday">
+        0
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- TASK PREVIEW -->
+
+  <div class="section-title">
+
+    <h2>
+      🎯 Nhiệm vụ đề xuất
+    </h2>
+
+    <span>
+      Cập nhật ngẫu nhiên
+    </span>
+
+  </div>
+
+  <div
+    class="task-list"
+    id="homeTasks">
+  </div>
+
+</section>
+
+
+
+<!-- =========================
+     TASKS
+========================== -->
+
+<section id="page-tasks" class="page">
+
+  <div class="section-title">
+
+    <div>
+      <h2>🎯 Nhiệm vụ</h2>
+
+      <span>
+        Chọn nhiệm vụ bạn muốn thực hiện
+      </span>
+    </div>
+
+    <button
+      class="btn-secondary"
+      onclick="loadTasks()">
+      🔄 Làm mới
     </button>
 
   </div>
+
+
+  <div
+    class="task-list"
+    id="tasksList">
+  </div>
+
+</section>
+
+
+
+<!-- =========================
+     RANKING
+========================== -->
+
+<section id="page-ranking" class="page">
+
+  <div class="section-title">
+
+    <div>
+      <h2>🏆 Bảng xếp hạng</h2>
+
+      <span>
+        Ai tích nhiều điểm nhất?
+      </span>
+    </div>
+
+  </div>
+
+
+  <div class="ranking-tabs">
+
+    <button
+      class="ranking-tab active"
+      id="dayTab"
+      onclick="loadRanking('day')">
+      Hôm nay
+    </button>
+
+    <button
+      class="ranking-tab"
+      id="weekTab"
+      onclick="loadRanking('week')">
+      Tuần này
+    </button>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="ranking-row"
+         style="color:var(--muted); font-size:12px;">
+
+      <div>HẠNG</div>
+
+      <div>NGƯỜI DÙNG</div>
+
+      <div style="text-align:right">
+        ĐIỂM
+      </div>
+
+      <div style="text-align:right">
+        THƯỞNG
+      </div>
+
+    </div>
+
+    <div id="rankingList"></div>
+
+  </div>
+
+</section>
+
+
+
+<!-- =========================
+     ACCOUNT
+========================== -->
+
+<section id="page-account" class="page">
+
+  <div
+    id="loggedOutAccount"
+    class="card login-card">
+
+    <div class="big-icon">
+      👤
+    </div>
+
+    <h2>
+      Bạn chưa đăng nhập
+    </h2>
+
+    <p>
+      Đăng nhập để xem điểm, lịch sử nhiệm vụ
+      và thông tin tài khoản.
+    </p>
+
+    <button
+      class="btn-primary"
+      onclick="openAuth()">
+      Đăng nhập / Đăng ký
+    </button>
+
+  </div>
+
+
+  <div
+    id="loggedInAccount"
+    class="card account-box"
+    style="display:none;">
+
+    <div class="account-head">
+
+      <div
+        class="account-avatar"
+        id="accountAvatar">
+        U
+      </div>
+
+      <div>
+
+        <h2 id="accountUsername">
+          Người dùng
+        </h2>
+
+        <p id="accountEmail">
+          —
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="stats">
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          Tổng điểm
+        </div>
+
+        <div
+          class="stat-value points"
+          id="accountPoints">
+          0
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          Nhiệm vụ đã làm
+        </div>
+
+        <div
+          class="stat-value"
+          id="accountCompleted">
+          0
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          Hôm nay
+        </div>
+
+        <div
+          class="stat-value"
+          id="accountToday">
+          0
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="account-actions">
+
+      <button
+        class="btn-primary"
+        onclick="showPage('tasks')">
+        🎯 Làm nhiệm vụ
+      </button>
+
+      <button
+        class="logout-btn"
+        onclick="logout()">
+        Đăng xuất
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
 </div>
+
+</main>
+
+
+
+<!-- =========================
+     AUTH MODAL
+========================== -->
+
+<div
+  class="modal"
+  id="authModal">
+
+  <div class="modal-box">
+
+    <button
+      class="modal-close"
+      onclick="closeAuth()">
+      ×
+    </button>
+
+
+    <h2
+      class="modal-title"
+      id="authTitle">
+      Chào mừng bạn
+    </h2>
+
+    <p
+      class="modal-subtitle"
+      id="authSubtitle">
+      Đăng nhập để tiếp tục
+    </p>
+
+
+    <div class="auth-tabs">
+
+      <button
+        class="auth-tab active"
+        id="loginTab"
+        onclick="setAuthMode('login')">
+        Đăng nhập
+      </button>
+
+      <button
+        class="auth-tab"
+        id="registerTab"
+        onclick="setAuthMode('register')">
+        Đăng ký
+      </button>
+
+    </div>
+
+
+    <div
+      class="auth-error"
+      id="authError">
+    </div>
+
+
+    <!-- LOGIN -->
+
+    <form
+      id="loginForm"
+      onsubmit="handleLogin(event)">
+
+      <div class="form-group">
+
+        <label>
+          Tên đăng nhập hoặc email
+        </label>
+
+        <input
+          id="loginIdentity"
+          type="text"
+          placeholder="Nhập tên hoặc email"
+          autocomplete="username"
+          required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Mật khẩu
+        </label>
+
+        <div class="input-wrap">
+
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="Nhập mật khẩu"
+            autocomplete="current-password"
+            required>
+
+          <button
+            type="button"
+            class="password-toggle"
+            onclick="togglePassword('loginPassword', this)">
+            👁
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <button
+        type="submit"
+        class="auth-submit"
+        id="loginSubmit">
+        Đăng nhập
+      </button>
+
+    </form>
+
+
+    <!-- REGISTER -->
+
+    <form
+      id="registerForm"
+      style="display:none;"
+      onsubmit="handleRegister(event)">
+
+      <div class="form-group">
+
+        <label>
+          Tên đăng nhập
+        </label>
+
+        <input
+          id="registerUsername"
+          type="text"
+          placeholder="Ví dụ: trung123"
+          minlength="3"
+          maxlength="24"
+          autocomplete="username"
+          required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Email
+        </label>
+
+        <input
+          id="registerEmail"
+          type="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Mật khẩu
+        </label>
+
+        <div class="input-wrap">
+
+          <input
+            id="registerPassword"
+            type="password"
+            placeholder="Tối thiểu 8 ký tự"
+            minlength="8"
+            maxlength="72"
+            autocomplete="new-password"
+            required>
+
+          <button
+            type="button"
+            class="password-toggle"
+            onclick="togglePassword('registerPassword', this)">
+            👁
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>
+          Nhập lại mật khẩu
+        </label>
+
+        <div class="input-wrap">
+
+          <input
+            id="registerConfirm"
+            type="password"
+            placeholder="Nhập lại mật khẩu"
+            minlength="8"
+            maxlength="72"
+            autocomplete="new-password"
+            required>
+
+          <button
+            type="button"
+            class="password-toggle"
+            onclick="togglePassword('registerConfirm', this)">
+            👁
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <label class="checkbox-row">
+
+        <input
+          id="registerAgree"
+          type="checkbox"
+          required>
+
+        <span>
+          Tôi đồng ý sử dụng hệ thống đúng mục đích
+          và tự chịu trách nhiệm với các hoạt động
+          mình thực hiện.
+        </span>
+
+      </label>
+
+
+      <button
+        type="submit"
+        class="auth-submit"
+        id="registerSubmit">
+        Tạo tài khoản
+      </button>
+
+    </form>
+
+
+    <div class="auth-footer">
+
+      <span id="authFooterText">
+        Chưa có tài khoản?
+      </span>
+
+      <button
+        class="auth-link"
+        id="authFooterButton"
+        onclick="setAuthMode('register')">
+        Đăng ký ngay
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================
+     TOAST
+========================== -->
+
+<div
+  class="toast"
+  id="toast">
+</div>
+
+
 
 <script>
 
-/* =========================
-   DỮ LIỆU
-========================= */
+  /* ======================================
+     CONFIG
+  ====================================== */
 
-const MAIN_CHANNEL = {
-  name: "@uyn.uyn2229",
-  url: "https://www.tiktok.com/@uyn.uyn2229"
-};
+  const MAIN_CHANNEL =
+    "https://www.tiktok.com/@uyn.uyn2229";
 
-const DEFAULT_TASKS = [
 
-  {
-    id:"main-follow",
-    title:"Theo dõi kênh chính",
-    channel:MAIN_CHANNEL.name,
-    url:MAIN_CHANNEL.url,
-    type:"Theo dõi",
-    points:10
-  },
+  /*
+    API của server.js.
+    Khi index.html và server.js cùng Render
+    thì giữ nguyên /api/...
+  */
 
-  {
-    id:"video-1",
-    title:"Xem video TikTok",
-    channel:"@uyn.uyn2229",
-    url:"https://www.tiktok.com/@uyn.uyn2229",
-    type:"Xem video",
-    points:5
-  },
+  const API = "/api";
 
-  {
-    id:"video-2",
-    title:"Khám phá video mới",
-    channel:"@uyn.uyn2229",
-    url:"https://www.tiktok.com/@uyn.uyn2229",
-    type:"Khám phá",
-    points:5
-  },
 
-  {
-    id:"video-3",
-    title:"Xem nội dung đề xuất",
-    channel:"@uyn.uyn2229",
-    url:"https://www.tiktok.com/@uyn.uyn2229",
-    type:"Xem video",
-    points:5
+  /* ======================================
+     STATE
+  ====================================== */
+
+  let currentUser = null;
+
+  let currentTasks = [];
+
+  let authMode = "login";
+
+  let rankingPeriod = "day";
+
+
+  /* ======================================
+     BASIC HELPERS
+  ====================================== */
+
+  function escapeHtml(value) {
+
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
   }
 
-];
 
-let tasks =
-  JSON.parse(localStorage.getItem("nvd_tasks")) ||
-  DEFAULT_TASKS;
+  function showToast(message, type = "success") {
 
-let completed =
-  JSON.parse(localStorage.getItem("nvd_completed")) ||
-  [];
+    const toast =
+      document.getElementById("toast");
 
-let history =
-  JSON.parse(localStorage.getItem("nvd_history")) ||
-  [];
+    toast.textContent = message;
 
-let points =
-  Number(localStorage.getItem("nvd_points")) || 0;
+    toast.className =
+      "toast show " + type;
 
-let username =
-  localStorage.getItem("nvd_username") ||
-  "@nguoidung";
+    clearTimeout(window.toastTimer);
 
+    window.toastTimer =
+      setTimeout(() => {
 
-/* =========================
-   HIỂN THỊ
-========================= */
+        toast.classList.remove("show");
 
-function updateUI(){
+      }, 2800);
 
-  document.getElementById("points").textContent = points;
-
-  document.getElementById("statPoints").textContent = points;
-
-  document.getElementById("statCompleted").textContent =
-    completed.length;
-
-  document.getElementById("statAvailable").textContent =
-    tasks.length - completed.length;
-
-  document.getElementById("headerUser").textContent =
-    username;
-
-  document.getElementById("profileName").textContent =
-    username;
-
-  document.getElementById("nameInput").value =
-    username;
-
-  document.getElementById("profileAvatar").textContent =
-    username.replace("@","").charAt(0).toUpperCase();
-
-  renderTasks();
-  renderHistory();
-  renderRanking();
-
-}
-
-
-/* =========================
-   CHUYỂN TRANG
-========================= */
-
-function showPage(page,button){
-
-  document.querySelectorAll(".page")
-    .forEach(p=>p.classList.remove("active"));
-
-  document.getElementById(page)
-    .classList.add("active");
-
-  document.querySelectorAll(".nav button")
-    .forEach(b=>b.classList.remove("active"));
-
-  if(button){
-    button.classList.add("active");
   }
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
 
-}
+  async function apiFetch(url, options = {}) {
+
+    const response =
+      await fetch(API + url, {
+
+        credentials: "include",
+
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {})
+        },
+
+        ...options
+
+      });
 
 
-/* =========================
-   NHIỆM VỤ
-========================= */
+    let data = {};
 
-function renderTasks(){
+    try {
+      data = await response.json();
+    } catch (_) {}
 
-  const list =
-    document.getElementById("taskList");
 
-  const home =
-    document.getElementById("homeTasks");
+    if (!response.ok) {
 
-  list.innerHTML="";
-  home.innerHTML="";
+      throw new Error(
+        data.error ||
+        data.message ||
+        "Có lỗi xảy ra."
+      );
 
-  tasks.forEach(task=>{
+    }
+
+
+    return data;
+
+  }
+
+
+  /* ======================================
+     NAVIGATION
+  ====================================== */
+
+  function showPage(page) {
+
+    document
+      .querySelectorAll(".page")
+      .forEach(el => {
+
+        el.classList.remove("active");
+
+      });
+
+
+    const target =
+      document.getElementById(
+        "page-" + page
+      );
+
+
+    if (target) {
+
+      target.classList.add("active");
+
+    }
+
+
+    document
+      .querySelectorAll(".nav-btn")
+      .forEach(btn => {
+
+        btn.classList.toggle(
+          "active",
+          btn.dataset.page === page
+        );
+
+      });
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+
+    if (page === "tasks") {
+
+      loadTasks();
+
+    }
+
+
+    if (page === "ranking") {
+
+      loadRanking(rankingPeriod);
+
+    }
+
+
+    if (page === "account") {
+
+      updateAccountPage();
+
+    }
+
+  }
+
+
+  /* ======================================
+     MAIN CHANNEL
+  ====================================== */
+
+  function openMainChannel() {
+
+    window.open(
+      MAIN_CHANNEL,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+  }
+
+
+  /* ======================================
+     AUTH MODAL
+  ====================================== */
+
+  function openAuth(mode = "login") {
+
+    setAuthMode(mode);
+
+    document
+      .getElementById("authModal")
+      .classList.add("show");
+
+  }
+
+
+  function closeAuth() {
+
+    document
+      .getElementById("authModal")
+      .classList.remove("show");
+
+    clearAuthError();
+
+  }
+
+
+  function setAuthMode(mode) {
+
+    authMode = mode;
+
+    const login =
+      mode === "login";
+
+
+    document
+      .getElementById("loginForm")
+      .style.display =
+      login ? "block" : "none";
+
+
+    document
+      .getElementById("registerForm")
+      .style.display =
+      login ? "none" : "block";
+
+
+    document
+      .getElementById("loginTab")
+      .classList.toggle(
+        "active",
+        login
+      );
+
+
+    document
+      .getElementById("registerTab")
+      .classList.toggle(
+        "active",
+        !login
+      );
+
+
+    document
+      .getElementById("authTitle")
+      .textContent =
+      login
+        ? "Chào mừng bạn"
+        : "Tạo tài khoản";
+
+
+    document
+      .getElementById("authSubtitle")
+      .textContent =
+      login
+        ? "Đăng nhập để tiếp tục"
+        : "Tạo tài khoản để bắt đầu tích điểm";
+
+
+    document
+      .getElementById("authFooterText")
+      .textContent =
+      login
+        ? "Chưa có tài khoản?"
+        : "Đã có tài khoản?";
+
+
+    document
+      .getElementById("authFooterButton")
+      .textContent =
+      login
+        ? "Đăng ký ngay"
+        : "Đăng nhập";
+
+
+    document
+      .getElementById("authFooterButton")
+      .onclick =
+      () => setAuthMode(
+        login ? "register" : "login"
+      );
+
+
+    clearAuthError();
+
+  }
+
+
+  function showAuthError(message) {
+
+    const el =
+      document.getElementById("authError");
+
+    el.textContent = message;
+
+    el.classList.add("show");
+
+  }
+
+
+  function clearAuthError() {
+
+    const el =
+      document.getElementById("authError");
+
+    el.textContent = "";
+
+    el.classList.remove("show");
+
+  }
+
+
+  function togglePassword(id, button) {
+
+    const input =
+      document.getElementById(id);
+
+    if (input.type === "password") {
+
+      input.type = "text";
+      button.textContent = "🙈";
+
+    } else {
+
+      input.type = "password";
+      button.textContent = "👁";
+
+    }
+
+  }
+
+
+  /* ======================================
+     LOGIN
+  ====================================== */
+
+  async function handleLogin(event) {
+
+    event.preventDefault();
+
+    clearAuthError();
+
+
+    const identity =
+      document
+        .getElementById("loginIdentity")
+        .value
+        .trim();
+
+
+    const password =
+      document
+        .getElementById("loginPassword")
+        .value;
+
+
+    if (!identity || !password) {
+
+      showAuthError(
+        "Vui lòng nhập đầy đủ thông tin."
+      );
+
+      return;
+
+    }
+
+
+    const button =
+      document.getElementById(
+        "loginSubmit"
+      );
+
+
+    button.disabled = true;
+    button.textContent = "Đang đăng nhập...";
+
+
+    try {
+
+      const data =
+        await apiFetch(
+          "/login",
+          {
+            method: "POST",
+
+            body: JSON.stringify({
+              identity,
+              password
+            })
+          }
+        );
+
+
+      currentUser =
+        data.user || data;
+
+
+      closeAuth();
+
+      await refreshDashboard();
+
+      showToast(
+        "Đăng nhập thành công! 🎉"
+      );
+
+
+    } catch (error) {
+
+      showAuthError(
+        error.message
+      );
+
+    } finally {
+
+      button.disabled = false;
+      button.textContent = "Đăng nhập";
+
+    }
+
+  }
+
+
+  /* ======================================
+     REGISTER
+  ====================================== */
+
+  async function handleRegister(event) {
+
+    event.preventDefault();
+
+    clearAuthError();
+
+
+    const username =
+      document
+        .getElementById("registerUsername")
+        .value
+        .trim();
+
+
+    const email =
+      document
+        .getElementById("registerEmail")
+        .value
+        .trim();
+
+
+    const password =
+      document
+        .getElementById("registerPassword")
+        .value;
+
+
+    const confirm =
+      document
+        .getElementById("registerConfirm")
+        .value;
+
+
+    const agree =
+      document
+        .getElementById("registerAgree")
+        .checked;
+
+
+    if (!/^[A-Za-z0-9_.-]{3,24}$/.test(username)) {
+
+      showAuthError(
+        "Tên đăng nhập 3–24 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang."
+      );
+
+      return;
+
+    }
+
+
+    if (password.length < 8) {
+
+      showAuthError(
+        "Mật khẩu phải có ít nhất 8 ký tự."
+      );
+
+      return;
+
+    }
+
+
+    if (password !== confirm) {
+
+      showAuthError(
+        "Mật khẩu nhập lại không khớp."
+      );
+
+      return;
+
+    }
+
+
+    if (!agree) {
+
+      showAuthError(
+        "Bạn cần đồng ý với điều khoản sử dụng."
+      );
+
+      return;
+
+    }
+
+
+    const button =
+      document.getElementById(
+        "registerSubmit"
+      );
+
+
+    button.disabled = true;
+    button.textContent = "Đang tạo tài khoản...";
+
+
+    try {
+
+      const data =
+        await apiFetch(
+          "/register",
+          {
+            method: "POST",
+
+            body: JSON.stringify({
+              username,
+              email,
+              password
+            })
+          }
+        );
+
+
+      currentUser =
+        data.user || data;
+
+
+      closeAuth();
+
+      await refreshDashboard();
+
+      showToast(
+        "Tạo tài khoản thành công! 🎉"
+      );
+
+
+    } catch (error) {
+
+      showAuthError(
+        error.message
+      );
+
+    } finally {
+
+      button.disabled = false;
+      button.textContent = "Tạo tài khoản";
+
+    }
+
+  }
+
+
+  /* ======================================
+     LOGOUT
+  ====================================== */
+
+  async function logout() {
+
+    try {
+
+      await apiFetch(
+        "/logout",
+        {
+          method: "POST"
+        }
+      );
+
+    } catch (_) {}
+
+
+    currentUser = null;
+
+    updateUserUI();
+
+    showPage("home");
+
+    showToast(
+      "Đã đăng xuất."
+    );
+
+  }
+
+
+  /* ======================================
+     CHECK SESSION
+  ====================================== */
+
+  async function checkSession() {
+
+    try {
+
+      const data =
+        await apiFetch("/me");
+
+
+      if (data && data.user) {
+
+        currentUser =
+          data.user;
+
+      } else {
+
+        currentUser = null;
+
+      }
+
+    } catch (_) {
+
+      currentUser = null;
+
+    }
+
+
+    updateUserUI();
+
+  }
+
+
+  /* ======================================
+     DASHBOARD
+  ====================================== */
+
+  async function refreshDashboard() {
+
+    updateUserUI();
+
+
+    if (!currentUser) {
+
+      return;
+
+    }
+
+
+    try {
+
+      const data =
+        await apiFetch(
+          "/dashboard"
+        );
+
+
+      const user =
+        data.user || currentUser;
+
+
+      currentUser =
+        user;
+
+
+      updateStats(data);
+
+      updateAccountPage();
+
+    } catch (error) {
+
+      console.warn(
+        "Dashboard:",
+        error.message
+      );
+
+    }
+
+
+    loadTasks();
+
+  }
+
+
+  function updateStats(data = {}) {
+
+    const user =
+      data.user ||
+      currentUser ||
+      {};
+
+
+    const points =
+      Number(
+        data.points ??
+        user.points ??
+        0
+      );
+
+
+    const completed =
+      Number(
+        data.completed ??
+        user.completed ??
+        0
+      );
+
+
+    const today =
+      Number(
+        data.today ??
+        user.today ??
+        0
+      );
+
+
+    document
+      .getElementById("homePoints")
+      .textContent =
+      points;
+
+
+    document
+      .getElementById("homeCompleted")
+      .textContent =
+      completed;
+
+
+    document
+      .getElementById("homeToday")
+      .textContent =
+      today;
+
+
+    document
+      .getElementById("accountPoints")
+      .textContent =
+      points;
+
+
+    document
+      .getElementById("accountCompleted")
+      .textContent =
+      completed;
+
+
+    document
+      .getElementById("accountToday")
+      .textContent =
+      today;
+
+  }
+
+
+  /* ======================================
+     USER UI
+  ====================================== */
+
+  function updateUserUI() {
+
+    const headerButton =
+      document.getElementById(
+        "headerAuthButton"
+      );
+
+
+    if (currentUser) {
+
+      const username =
+        currentUser.username ||
+        "Tài khoản";
+
+
+      headerButton.textContent =
+        username;
+
+
+      document
+        .getElementById(
+          "loggedOutAccount"
+        )
+        .style.display =
+        "none";
+
+
+      document
+        .getElementById(
+          "loggedInAccount"
+        )
+        .style.display =
+        "block";
+
+
+      document
+        .getElementById(
+          "accountUsername"
+        )
+        .textContent =
+        username;
+
+
+      document
+        .getElementById(
+          "accountEmail"
+        )
+        .textContent =
+        currentUser.email || "—";
+
+
+      document
+        .getElementById(
+          "accountAvatar"
+        )
+        .textContent =
+        username
+          .charAt(0)
+          .toUpperCase();
+
+
+    } else {
+
+      headerButton.textContent =
+        "Đăng nhập";
+
+
+      document
+        .getElementById(
+          "loggedOutAccount"
+        )
+        .style.display =
+        "block";
+
+
+      document
+        .getElementById(
+          "loggedInAccount"
+        )
+        .style.display =
+        "none";
+
+
+      updateStats({
+        points: 0,
+        completed: 0,
+        today: 0
+      });
+
+    }
+
+  }
+
+
+  function updateAccountPage() {
+
+    updateUserUI();
+
+  }
+
+
+  /* ======================================
+     TASKS
+  ====================================== */
+
+  function taskTemplate(task) {
+
+    const id =
+      task.id;
+
+
+    const title =
+      escapeHtml(
+        task.title ||
+        "Nhiệm vụ TikTok"
+      );
+
+
+    const description =
+      escapeHtml(
+        task.description ||
+        task.channel ||
+        "Thực hiện nhiệm vụ theo hướng dẫn."
+      );
+
+
+    const points =
+      Number(
+        task.points || 10
+      );
+
 
     const done =
-      completed.includes(task.id);
+      Boolean(
+        task.completed
+      );
 
-    const html = `
+
+    return `
 
       <div class="task">
 
-        <div class="task-top">
+        <div class="task-left">
 
-          <div>
-            <div class="task-title">
-              ${task.title}
-            </div>
-
-            <div class="task-channel">
-              ${task.channel} · ${task.type}
-            </div>
+          <div class="task-icon">
+            🎯
           </div>
 
-          <div class="reward">
-            +${task.points} điểm
+          <div class="task-info">
+
+            <h3>
+              ${title}
+            </h3>
+
+            <p>
+              ${description}
+            </p>
+
           </div>
 
         </div>
 
-        <div class="task-actions">
+
+        <div class="task-right">
+
+          <div class="points-badge">
+            +${points} điểm
+          </div>
 
           <button
-            class="btn btn-primary"
-            onclick="openTikTok('${task.url}')"
-          >
-            🎵 Mở TikTok
-          </button>
-
-          <button
-            class="btn ${done ? "btn-success" : "btn-secondary"}"
+            class="task-btn ${done ? "done" : ""}"
             ${done ? "disabled" : ""}
-            onclick="completeTask('${task.id}')"
-          >
-            ${done ? "✓ Đã hoàn thành" : "✓ Hoàn thành"}
+            onclick="completeTask(${Number(id)})">
+
+            ${done
+              ? "✓ Đã làm"
+              : "Mở nhiệm vụ"}
+
           </button>
 
         </div>
 
       </div>
+
     `;
 
-    list.insertAdjacentHTML("beforeend",html);
-
-  });
+  }
 
 
-  /* Trang chủ chỉ hiện vài nhiệm vụ */
+  async function loadTasks() {
 
-  tasks.slice(0,3).forEach(task=>{
+    const containers = [
+      document.getElementById("tasksList"),
+      document.getElementById("homeTasks")
+    ];
 
-    const done =
-      completed.includes(task.id);
 
-    const html = `
+    containers.forEach(el => {
 
-      <div class="task">
+      if (el) {
 
-        <div class="task-top">
+        el.innerHTML = `
+          <div class="card login-card">
+            <div class="big-icon">⏳</div>
+            <p>Đang tải nhiệm vụ...</p>
+          </div>
+        `;
 
-          <div>
-            <div class="task-title">
-              ${task.title}
+      }
+
+    });
+
+
+    try {
+
+      const data =
+        await apiFetch(
+          "/tasks/random"
+        );
+
+
+      currentTasks =
+        data.tasks ||
+        data ||
+        [];
+
+
+      renderTasks();
+
+    } catch (error) {
+
+      containers.forEach(el => {
+
+        if (el) {
+
+          el.innerHTML = `
+            <div class="card login-card">
+              <div class="big-icon">⚠️</div>
+              <h2>Không tải được nhiệm vụ</h2>
+              <p>
+                ${escapeHtml(error.message)}
+              </p>
+              <button
+                class="btn-primary"
+                onclick="loadTasks()">
+                Thử lại
+              </button>
+            </div>
+          `;
+
+        }
+
+      });
+
+    }
+
+  }
+
+
+  function renderTasks() {
+
+    if (!Array.isArray(currentTasks)) {
+
+      currentTasks = [];
+
+    }
+
+
+    const html =
+      currentTasks.length
+
+        ? currentTasks
+            .map(taskTemplate)
+            .join("")
+
+        : `
+
+          <div class="card login-card">
+
+            <div class="big-icon">
+              🎉
             </div>
 
-            <div class="task-channel">
-              ${task.channel}
-            </div>
+            <h2>
+              Chưa có nhiệm vụ
+            </h2>
+
+            <p>
+              Hãy quay lại sau để xem nhiệm vụ mới.
+            </p>
+
           </div>
 
-          <div class="reward">
-            +${task.points}
-          </div>
+        `;
 
+
+    const taskList =
+      document.getElementById(
+        "tasksList"
+      );
+
+
+    const homeList =
+      document.getElementById(
+        "homeTasks"
+      );
+
+
+    if (taskList) {
+
+      taskList.innerHTML =
+        html;
+
+    }
+
+
+    if (homeList) {
+
+      homeList.innerHTML =
+        currentTasks
+          .slice(0, 4)
+          .map(taskTemplate)
+          .join("");
+
+    }
+
+  }
+
+
+  /* ======================================
+     COMPLETE TASK
+  ====================================== */
+
+  async function completeTask(taskId) {
+
+    if (!currentUser) {
+
+      openAuth("login");
+
+      showToast(
+        "Bạn cần đăng nhập trước.",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    const task =
+      currentTasks.find(
+        item =>
+          Number(item.id) ===
+          Number(taskId)
+      );
+
+
+    if (!task) {
+
+      return;
+
+    }
+
+
+    /*
+      Mở TikTok trước.
+      Người dùng tự thực hiện hành động.
+    */
+
+    const url =
+      task.url ||
+      task.link ||
+      MAIN_CHANNEL;
+
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+
+    /*
+      Xác nhận hoàn thành.
+      Không tự động follow/like/comment.
+    */
+
+    const confirmed =
+      window.confirm(
+        "Bạn đã tự hoàn thành nhiệm vụ này chưa?"
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+    try {
+
+      await apiFetch(
+        "/tasks/complete",
+        {
+          method: "POST",
+
+          body: JSON.stringify({
+            taskId: Number(taskId)
+          })
+        }
+      );
+
+
+      task.completed = true;
+
+
+      renderTasks();
+
+      await refreshDashboard();
+
+
+      showToast(
+        `Hoàn thành nhiệm vụ! +${Number(task.points || 0)} điểm 🎉`
+      );
+
+
+    } catch (error) {
+
+      showToast(
+        error.message,
+        "error"
+      );
+
+    }
+
+  }
+
+
+  /* ======================================
+     RANKING
+  ====================================== */
+
+  async function loadRanking(period = "day") {
+
+    rankingPeriod =
+      period;
+
+
+    const dayTab =
+      document.getElementById(
+        "dayTab"
+      );
+
+
+    const weekTab =
+      document.getElementById(
+        "weekTab"
+      );
+
+
+    dayTab.classList.toggle(
+      "active",
+      period === "day"
+    );
+
+
+    weekTab.classList.toggle(
+      "active",
+      period === "week"
+    );
+
+
+    const list =
+      document.getElementById(
+        "rankingList"
+      );
+
+
+    list.innerHTML = `
+
+      <div class="login-card">
+
+        <div class="big-icon">
+          ⏳
         </div>
 
-        <div class="task-actions">
-
-          <button
-            class="btn btn-primary"
-            onclick="openTikTok('${task.url}')"
-          >
-            Mở TikTok
-          </button>
-
-          <button
-            class="btn ${done ? "btn-success" : "btn-secondary"}"
-            ${done ? "disabled" : ""}
-            onclick="completeTask('${task.id}')"
-          >
-            ${done ? "✓ Xong" : "Xác nhận"}
-          </button>
-
-        </div>
+        <p>
+          Đang tải bảng xếp hạng...
+        </p>
 
       </div>
+
     `;
 
-    home.insertAdjacentHTML("beforeend",html);
 
-  });
+    try {
 
-}
-
-
-function openTikTok(url){
-
-  window.open(
-    url,
-    "_blank",
-    "noopener,noreferrer"
-  );
-
-}
+      const data =
+        await apiFetch(
+          "/leaderboard?period=" +
+          encodeURIComponent(period)
+        );
 
 
-function completeTask(id){
+      const users =
+        data.users ||
+        data.leaderboard ||
+        data ||
+        [];
 
-  if(completed.includes(id)){
-    return;
+
+      renderRanking(users, period);
+
+
+    } catch (error) {
+
+      /*
+        Nếu backend chưa có dữ liệu,
+        vẫn hiển thị giao diện.
+      */
+
+      renderRanking([], period);
+
+      console.warn(
+        "Ranking:",
+        error.message
+      );
+
+    }
+
   }
 
-  const task =
-    tasks.find(t=>t.id===id);
 
-  if(!task){
-    return;
+  function renderRanking(users, period) {
+
+    const list =
+      document.getElementById(
+        "rankingList"
+      );
+
+
+    if (!Array.isArray(users) ||
+        users.length === 0) {
+
+      list.innerHTML = `
+
+        <div class="login-card">
+
+          <div class="big-icon">
+            🏆
+          </div>
+
+          <h2>
+            Chưa có dữ liệu
+          </h2>
+
+          <p>
+            Bảng xếp hạng sẽ xuất hiện khi có người dùng tích điểm.
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    const rewards =
+      period === "day"
+
+        ? [50, 30, 20]
+
+        : [150, 100, 50];
+
+
+    list.innerHTML =
+      users
+        .slice(0, 50)
+        .map((user, index) => {
+
+          const rank =
+            index + 1;
+
+
+          const username =
+            escapeHtml(
+              user.username ||
+              "Người dùng"
+            );
+
+
+          const points =
+            Number(
+              user.points || 0
+            );
+
+
+          const reward =
+            rewards[index] ||
+            0;
+
+
+          let medal =
+            "";
+
+
+          if (rank === 1) medal = "🥇";
+          if (rank === 2) medal = "🥈";
+          if (rank === 3) medal = "🥉";
+
+
+          return `
+
+            <div class="ranking-row">
+
+              <div class="rank-number">
+                ${medal || rank}
+              </div>
+
+
+              <div class="rank-user">
+
+                <div class="avatar">
+                  ${escapeHtml(
+                    username
+                      .charAt(0)
+                      .toUpperCase()
+                  )}
+                </div>
+
+                <span>
+                  ${username}
+                </span>
+
+              </div>
+
+
+              <div class="rank-points">
+                ${points}
+              </div>
+
+
+              <div class="rank-reward">
+
+                ${
+                  reward
+                    ? "+" + reward
+                    : "—"
+                }
+
+              </div>
+
+            </div>
+
+          `;
+
+        })
+        .join("");
+
   }
 
-  /*
-    Người dùng tự xác nhận sau khi
-    hoàn thành nhiệm vụ trên TikTok.
-  */
 
-  const ok =
-    confirm(
-      `Bạn đã hoàn thành nhiệm vụ "${task.title}" chưa?`
+  /* ======================================
+     MODAL EVENTS
+  ====================================== */
+
+  document
+    .getElementById("authModal")
+    .addEventListener(
+      "click",
+      function(event) {
+
+        if (event.target === this) {
+
+          closeAuth();
+
+        }
+
+      }
     );
 
-  if(!ok){
-    return;
-  }
 
-  completed.push(id);
+  document.addEventListener(
+    "keydown",
+    function(event) {
 
-  points += Number(task.points);
+      if (event.key === "Escape") {
 
-  history.unshift({
+        closeAuth();
 
-    id:id,
+      }
 
-    title:task.title,
-
-    points:task.points,
-
-    time:new Date().toLocaleString("vi-VN")
-
-  });
-
-  localStorage.setItem(
-    "nvd_completed",
-    JSON.stringify(completed)
+    }
   );
 
-  localStorage.setItem(
-    "nvd_history",
-    JSON.stringify(history)
-  );
 
-  localStorage.setItem(
-    "nvd_points",
-    points
-  );
+  /* ======================================
+     START
+  ====================================== */
 
-  alert(
-    `🎉 Hoàn thành! Bạn nhận được +${task.points} điểm.`
-  );
+  async function init() {
 
-  updateUI();
+    updateUserUI();
 
-}
+    await checkSession();
+
+    if (currentUser) {
+
+      await refreshDashboard();
+
+    } else {
+
+      loadTasks();
+
+    }
 
 
-/* =========================
-   LỊCH SỬ
-========================= */
+    loadRanking("day");
 
-function renderHistory(){
-
-  const box =
-    document.getElementById("historyList");
-
-  if(history.length===0){
-
-    box.innerHTML =
-      `<div class="empty">Chưa có nhiệm vụ nào.</div>`;
-
-    return;
   }
 
-  box.innerHTML="";
 
-  history.slice(0,20).forEach(item=>{
-
-    box.insertAdjacentHTML(
-      "beforeend",
-      `
-      <div class="history-item">
-
-        <div>
-          <b>${item.title}</b><br>
-          <small>${item.time}</small>
-        </div>
-
-        <strong>+${item.points}</strong>
-
-      </div>
-      `
-    );
-
-  });
-
-}
-
-
-/* =========================
-   TÊN NGƯỜI DÙNG
-========================= */
-
-function saveName(){
-
-  let name =
-    document.getElementById("nameInput").value.trim();
-
-  if(!name){
-    alert("Vui lòng nhập tên.");
-    return;
-  }
-
-  if(!name.startsWith("@")){
-    name="@"+name;
-  }
-
-  username=name;
-
-  localStorage.setItem(
-    "nvd_username",
-    username
-  );
-
-  updateUI();
-
-  alert("Đã lưu tài khoản!");
-
-}
-
-
-/* =========================
-   BẢNG XẾP HẠNG
-========================= */
-
-let currentRanking="day";
-
-
-const demoUsers = [
-
-  {
-    name:"@creator_top",
-    day:520,
-    week:1850
-  },
-
-  {
-    name:"@user_02",
-    day:430,
-    week:1520
-  },
-
-  {
-    name:"@user_03",
-    day:350,
-    week:1240
-  },
-
-  {
-    name:"@user_04",
-    day:280,
-    week:980
-  },
-
-  {
-    name:"@user_05",
-    day:210,
-    week:750
-  }
-
-];
-
-
-function rankingType(type,button){
-
-  currentRanking=type;
-
-  document.querySelectorAll(".rank-tabs button")
-    .forEach(b=>b.classList.remove("active"));
-
-  if(button){
-    button.classList.add("active");
-  }
-
-  renderRanking();
-
-}
-
-
-function renderRanking(){
-
-  const box =
-    document.getElementById("rankingList");
-
-  let users =
-    [...demoUsers];
-
-  /*
-    Hiện người dùng hiện tại
-    vào bảng xếp hạng theo điểm local.
-  */
-
-  users.push({
-
-    name:username,
-
-    day:points,
-
-    week:points
-
-  });
-
-  const field =
-    currentRanking==="day"
-      ? "day"
-      : "week";
-
-  users.sort(
-    (a,b)=>b[field]-a[field]
-  );
-
-  box.innerHTML="";
-
-  users.forEach((user,index)=>{
-
-    let medal="";
-
-    if(index===0) medal="🥇";
-    if(index===1) medal="🥈";
-    if(index===2) medal="🥉";
-
-    box.insertAdjacentHTML(
-      "beforeend",
-      `
-      <div class="rank-row">
-
-        <div class="rank-number">
-          ${medal || index+1}
-        </div>
-
-        <div class="avatar">
-          ${user.name.replace("@","").charAt(0).toUpperCase()}
-        </div>
-
-        <div class="rank-name">
-          ${user.name}
-        </div>
-
-        <div class="rank-points">
-          ${user[field]} điểm
-        </div>
-
-      </div>
-      `
-    );
-
-  });
-
-}
-
-
-/* =========================
-   KHỞI ĐỘNG
-========================= */
-
-updateUI();
+  init();
 
 </script>
 
