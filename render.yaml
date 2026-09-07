@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: nhiem-vu-diem
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: app-data
+      mountPath: /var/data
+      sizeGB: 1
