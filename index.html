@@ -1,730 +1,1744 @@
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-const { Pool } = require("pg");
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-const PORT = Number(process.env.PORT || 10000);
-const HOST = "0.0.0.0";
+<title>Nhiệm Vụ Điểm</title>
 
-const DATABASE_URL = process.env.DATABASE_URL;
-
-if (!DATABASE_URL) {
-  console.error("DATABASE_URL chưa được cấu hình trên Render.");
+<style>
+*{
+  box-sizing:border-box;
 }
 
-const pool = DATABASE_URL
-  ? new Pool({
-      connectionString: DATABASE_URL,
-      ssl:
-        process.env.NODE_ENV === "production"
-          ? { rejectUnauthorized: false }
-          : false
-    })
-  : null;
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f5f7fb;
+  color:#182033;
+}
 
-const sessions = new Map();
+button{
+  font:inherit;
+  cursor:pointer;
+  border:0;
+}
 
-const MAIN_CHANNEL = {
-  name: "@uyn.uyn2229",
-  url: "https://www.tiktok.com/@uyn.uyn2229"
-};
+.topbar{
+  height:68px;
+  background:#fff;
+  border-bottom:1px solid #e5e8ee;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 5%;
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+
+.logo{
+  font-size:21px;
+  font-weight:900;
+}
+
+.logo span{
+  color:#ff2d55;
+}
+
+.nav{
+  display:flex;
+  gap:5px;
+}
+
+.nav button{
+  background:transparent;
+  padding:10px 13px;
+  border-radius:10px;
+  color:#596275;
+  font-weight:700;
+}
+
+.nav button.active,
+.nav button:hover{
+  background:#fff0f3;
+  color:#ff2d55;
+}
+
+.account{
+  background:#182033!important;
+  color:#fff!important;
+  border-radius:10px!important;
+}
+
+.container{
+  width:min(1100px,92%);
+  margin:28px auto 70px;
+}
+
+.page{
+  display:none;
+}
+
+.page.active{
+  display:block;
+}
+
+.hero{
+  background:linear-gradient(135deg,#171d2b,#30394f);
+  color:#fff;
+  border-radius:20px;
+  padding:32px;
+  margin-bottom:20px;
+}
+
+.hero h1{
+  margin:0 0 8px;
+  font-size:33px;
+}
+
+.hero p{
+  color:#dbe0e9;
+  line-height:1.6;
+}
+
+.channel{
+  margin-top:20px;
+  background:#fff;
+  color:#182033;
+  border-radius:15px;
+  padding:17px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+}
+
+.channel small{
+  color:#727b8b;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-bottom:18px;
+}
+
+.stat{
+  background:#fff;
+  border:1px solid #e5e8ee;
+  border-radius:16px;
+  padding:18px;
+}
+
+.stat small{
+  color:#727b8b;
+}
+
+.stat b{
+  display:block;
+  font-size:28px;
+  margin-top:5px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e5e8ee;
+  border-radius:16px;
+  padding:21px;
+  margin-bottom:18px;
+}
+
+.section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.section-title h2{
+  margin:0;
+}
+
+.btn{
+  padding:11px 16px;
+  border-radius:10px;
+  font-weight:800;
+}
+
+.primary{
+  background:#ff2d55;
+  color:#fff;
+}
+
+.dark{
+  background:#182033;
+  color:#fff;
+}
+
+.soft{
+  background:#edf0f5;
+  color:#182033;
+}
+
+.checkin-box{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+}
+
+.checkin-status{
+  font-weight:800;
+  margin-bottom:5px;
+}
+
+.task-list{
+  display:grid;
+  gap:13px;
+}
+
+.task{
+  border:1px solid #e2e6ed;
+  border-radius:15px;
+  padding:18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.task h3{
+  margin:8px 0;
+}
+
+.task p{
+  margin:0;
+  color:#6f788a;
+  line-height:1.5;
+}
+
+.badge{
+  display:inline-block;
+  background:#fff0f3;
+  color:#ff2d55;
+  border-radius:99px;
+  padding:5px 9px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.task-points{
+  color:#ff2d55;
+  font-size:19px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.notice{
+  background:#fff8e5;
+  border:1px solid #f1dda2;
+  color:#6e5914;
+  padding:13px;
+  border-radius:12px;
+  line-height:1.5;
+  margin-bottom:16px;
+}
+
+.loading,
+.empty{
+  text-align:center;
+  color:#737c8d;
+  padding:28px;
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.tabs button{
+  background:#e9edf3;
+  padding:11px 18px;
+  border-radius:10px;
+  font-weight:800;
+}
+
+.tabs button.active{
+  background:#182033;
+  color:#fff;
+}
+
+.leaderboard{
+  background:#fff;
+  border:1px solid #e5e8ee;
+  border-radius:16px;
+  overflow:hidden;
+}
+
+.rank-row{
+  display:grid;
+  grid-template-columns:70px 1fr 130px;
+  align-items:center;
+  padding:16px 18px;
+  border-bottom:1px solid #edf0f4;
+}
+
+.rank-row:last-child{
+  border-bottom:0;
+}
+
+.rank{
+  font-size:21px;
+  font-weight:900;
+}
+
+.rank-points{
+  text-align:right;
+  font-weight:800;
+}
+
+.rank-1{
+  background:#fff9e8;
+}
+
+.rank-2{
+  background:#f7f8fa;
+}
+
+.rank-3{
+  background:#fff4ee;
+}
+
+.reward{
+  margin-top:16px;
+  background:#f7f8fa;
+  border-radius:14px;
+  padding:16px;
+}
+
+.ref-box{
+  display:grid;
+  gap:12px;
+}
+
+.ref-code{
+  font-size:26px;
+  font-weight:900;
+  letter-spacing:2px;
+}
+
+.ref-link{
+  background:#f6f7f9;
+  padding:12px;
+  border-radius:10px;
+  word-break:break-all;
+  color:#555f71;
+}
+
+.info{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#f7f8fa;
+  border-radius:10px;
+  padding:13px;
+}
+
+.profile{
+  display:grid;
+  gap:10px;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#0008;
+  z-index:100;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:min(450px,100%);
+  background:#fff;
+  border-radius:18px;
+  padding:24px;
+  position:relative;
+}
+
+.close{
+  position:absolute;
+  right:15px;
+  top:14px;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  background:#edf0f5;
+  font-size:20px;
+}
+
+.field{
+  margin-bottom:14px;
+}
+
+.field label{
+  display:block;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.field input{
+  width:100%;
+  padding:12px;
+  border:1px solid #dce1e8;
+  border-radius:10px;
+  font-size:15px;
+}
+
+.password{
+  position:relative;
+}
+
+.password input{
+  padding-right:65px;
+}
+
+.show{
+  position:absolute;
+  right:7px;
+  top:6px;
+  background:#edf0f5;
+  padding:7px 9px;
+  border-radius:7px;
+}
+
+.switch{
+  text-align:center;
+  margin-top:14px;
+  color:#6c7586;
+}
+
+.switch button{
+  background:none;
+  color:#ff2d55;
+  font-weight:800;
+}
+
+.check{
+  display:flex;
+  gap:8px;
+  color:#626b7b;
+  font-size:14px;
+  margin:12px 0;
+}
+
+.toast{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  background:#182033;
+  color:#fff;
+  padding:13px 16px;
+  border-radius:10px;
+  display:none;
+  z-index:200;
+  max-width:370px;
+}
+
+.toast.show{
+  display:block;
+}
+
+@media(max-width:760px){
+
+  .nav{
+    display:none;
+  }
+
+  .hero{
+    padding:24px;
+  }
+
+  .hero h1{
+    font-size:27px;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .channel,
+  .checkin-box,
+  .task{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .rank-row{
+    grid-template-columns:55px 1fr 100px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+  <div class="logo">
+    Nhiệm Vụ <span>Điểm</span>
+  </div>
+
+  <nav class="nav">
+
+    <button
+      id="nav-home"
+      class="active"
+      onclick="showPage('home')">
+      Trang chủ
+    </button>
+
+    <button
+      id="nav-tasks"
+      onclick="showPage('tasks')">
+      Nhiệm vụ
+    </button>
+
+    <button
+      id="nav-ranking"
+      onclick="showPage('ranking')">
+      🏆 Xếp hạng
+    </button>
+
+    <button
+      id="nav-account"
+      onclick="showPage('account')">
+      Tài khoản
+    </button>
+
+  </nav>
+
+  <button
+    class="account"
+    id="accountButton"
+    onclick="openAuth()">
+    Đăng nhập
+  </button>
+
+</header>
+
+<main class="container">
+
+<!-- ================= HOME ================= -->
+
+<section
+  id="page-home"
+  class="page active">
+
+  <div class="hero">
+
+    <h1>
+      Hoàn thành nhiệm vụ, tích điểm 🎯
+    </h1>
+
+    <p>
+      Tham gia nhiệm vụ, điểm danh mỗi ngày
+      và giới thiệu bạn bè để nhận thêm điểm.
+    </p>
+
+    <div class="channel">
+
+      <div>
+        <b>Kênh chính</b>
+        <br>
+        <small>@uyn.uyn2229</small>
+      </div>
+
+      <button
+        class="btn primary"
+        onclick="openMain()">
+        Mở TikTok
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="stats">
+
+    <div class="stat">
+      <small>Điểm hiện tại</small>
+      <b id="points">0</b>
+    </div>
+
+    <div class="stat">
+      <small>Đã hoàn thành</small>
+      <b id="completed">0</b>
+    </div>
+
+    <div class="stat">
+      <small>Điểm hôm nay</small>
+      <b id="today">0</b>
+    </div>
+
+  </div>
+
+  <!-- ĐIỂM DANH -->
+
+  <div class="card">
+
+    <div class="section-title">
+      <h2>📅 Điểm danh hôm nay</h2>
+    </div>
+
+    <div class="checkin-box">
+
+      <div>
+
+        <div
+          id="checkinStatus"
+          class="checkin-status">
+          Đang kiểm tra...
+        </div>
+
+        <small>
+          Mỗi ngày nhận +5 điểm
+        </small>
+
+      </div>
+
+      <button
+        id="checkinBtn"
+        class="btn primary"
+        onclick="doCheckin()">
+        Điểm danh
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- NHIỆM VỤ -->
+
+  <div class="card">
+
+    <div class="section-title">
+
+      <h2>🎯 Nhiệm vụ</h2>
+
+      <button
+        class="btn soft"
+        onclick="showPage('tasks')">
+        Xem tất cả
+      </button>
+
+    </div>
+
+    <div
+      id="homeTasks"
+      class="task-list">
+
+      <div class="loading">
+        Đang tải...
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- GIỚI THIỆU -->
+
+  <div class="card">
+
+    <div class="section-title">
+      <h2>👥 Giới thiệu bạn bè</h2>
+    </div>
+
+    <p style="line-height:1.6;color:#6f788a;margin:0">
+
+      Bạn bè đăng ký bằng link giới thiệu của bạn.
+
+      Khi người được giới thiệu đạt
+      <b>20 điểm</b>,
+
+      bạn nhận
+      <b>+20 điểm</b>
+      thưởng.
+
+    </p>
+
+  </div>
+
+</section>
+
+<!-- ================= TASKS ================= -->
+
+<section
+  id="page-tasks"
+  class="page">
+
+  <div class="section-title">
+
+    <div>
+      <h2>Nhiệm vụ</h2>
+
+      <p style="color:#70798a">
+        Tự thực hiện nhiệm vụ trên TikTok
+        rồi xác nhận.
+      </p>
+    </div>
+
+    <button
+      class="btn primary"
+      onclick="loadTasks()">
+      Làm mới
+    </button>
+
+  </div>
+
+  <div class="notice">
+
+    Website không tự động follow,
+    like hoặc comment.
+
+    Bạn tự quyết định và tự thao tác
+    trên TikTok.
+
+  </div>
+
+  <div
+    id="tasksList"
+    class="task-list">
+
+    <div class="loading">
+      Đang tải...
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ================= RANKING ================= -->
+
+<section
+  id="page-ranking"
+  class="page">
+
+  <div class="section-title">
+
+    <div>
+
+      <h2>🏆 Xếp hạng</h2>
+
+      <p style="color:#70798a">
+        Xếp hạng điểm nhiệm vụ.
+      </p>
+
+    </div>
+
+    <button
+      class="btn soft"
+      onclick="loadLeaderboard()">
+      Cập nhật
+    </button>
+
+  </div>
+
+  <div class="tabs">
+
+    <button
+      id="dayTab"
+      class="active"
+      onclick="changeRanking('day')">
+      Hôm nay
+    </button>
+
+    <button
+      id="weekTab"
+      onclick="changeRanking('week')">
+      Tuần này
+    </button>
+
+  </div>
+
+  <div class="leaderboard">
+
+    <div
+      class="rank-row"
+      style="background:#f7f8fa;font-weight:800">
+
+      <div>Hạng</div>
+      <div>Người dùng</div>
+      <div style="text-align:right">
+        Điểm
+      </div>
+
+    </div>
+
+    <div id="leaderboardList">
+
+      <div class="loading">
+        Đang tải...
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="reward">
+
+    <b>🎁 Thưởng xếp hạng</b>
+
+    <div
+      id="rewardText"
+      style="margin-top:8px;color:#60697a">
+
+      🥇 50 điểm ·
+      🥈 30 điểm ·
+      🥉 20 điểm
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ================= ACCOUNT ================= -->
+
+<section
+  id="page-account"
+  class="page">
+
+  <div class="section-title">
+    <h2>Tài khoản</h2>
+  </div>
+
+  <div id="accountContent"></div>
+
+</section>
+
+</main>
+
+<!-- ================= AUTH MODAL ================= -->
+
+<div
+  id="authModal"
+  class="modal">
+
+  <div class="modal-box">
+
+    <button
+      class="close"
+      onclick="closeAuth()">
+      ×
+    </button>
+
+    <!-- LOGIN -->
+
+    <div id="loginForm">
+
+      <h2>Đăng nhập</h2>
+
+      <div class="field">
+
+        <label>
+          Tài khoản hoặc email
+        </label>
+
+        <input
+          id="loginIdentifier"
+          autocomplete="username">
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Mật khẩu
+        </label>
+
+        <div class="password">
+
+          <input
+            id="loginPassword"
+            type="password"
+            autocomplete="current-password">
+
+          <button
+            class="show"
+            onclick="togglePass('loginPassword')">
+            Hiện
+          </button>
+
+        </div>
+
+      </div>
+
+      <button
+        class="btn primary"
+        style="width:100%"
+        onclick="login()">
+
+        Đăng nhập
+
+      </button>
+
+      <div class="switch">
+
+        Chưa có tài khoản?
+
+        <button onclick="showRegister()">
+          Đăng ký
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- REGISTER -->
+
+    <div
+      id="registerForm"
+      style="display:none">
+
+      <h2>Tạo tài khoản</h2>
+
+      <div class="field">
+
+        <label>
+          Tên người dùng
+        </label>
+
+        <input
+          id="registerUsername"
+          maxlength="24">
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Email
+        </label>
+
+        <input
+          id="registerEmail"
+          type="email">
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Mật khẩu
+        </label>
+
+        <div class="password">
+
+          <input
+            id="registerPassword"
+            type="password">
+
+          <button
+            class="show"
+            onclick="togglePass('registerPassword')">
+            Hiện
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="field">
+
+        <label>
+          Nhập lại mật khẩu
+        </label>
+
+        <input
+          id="registerConfirm"
+          type="password">
+
+      </div>
+
+      <label class="check">
+
+        <input
+          id="agree"
+          type="checkbox">
+
+        <span>
+          Tôi đồng ý tự thực hiện nhiệm vụ
+          và sử dụng website đúng mục đích.
+        </span>
+
+      </label>
+
+      <button
+        class="btn primary"
+        style="width:100%"
+        onclick="register()">
+
+        Tạo tài khoản
+
+      </button>
+
+      <div class="switch">
+
+        Đã có tài khoản?
+
+        <button onclick="showLogin()">
+          Đăng nhập
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+
+const API = "/api";
+
+const MAIN =
+  "https://www.tiktok.com/@uyn.uyn2229";
+
+let currentUser = null;
+
+let currentRanking = "day";
+
+let cachedTasks = [];
 
 // =========================
-// CẤU HÌNH
+// HELPERS
 // =========================
 
-const CHECKIN_POINTS = 5;
+function esc(value){
 
-// Người được giới thiệu đạt từ 20 điểm
-const REFERRAL_THRESHOLD = 20;
+  return String(value ?? "")
+    .replace(/[&<>"']/g, function(match){
 
-// Người giới thiệu nhận 20 điểm
-const REFERRAL_REWARD = 20;
+      return {
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      }[match];
 
-// =========================
-// HTTP HELPERS
-// =========================
+    });
 
-function sendJSON(res, status, data, headers = {}) {
-  const body = JSON.stringify(data);
-
-  res.writeHead(status, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    ...headers
-  });
-
-  res.end(body);
 }
 
-function sendText(res, status, body, type = "text/plain; charset=utf-8") {
-  res.writeHead(status, {
-    "Content-Type": type
-  });
+function toast(message){
 
-  res.end(body);
-}
+  const el =
+    document.getElementById("toast");
 
-function parseCookies(req) {
-  const cookies = {};
+  el.textContent = message;
 
-  const raw = req.headers.cookie || "";
+  el.classList.add("show");
 
-  raw.split(";").forEach((item) => {
-    const index = item.indexOf("=");
-
-    if (index === -1) return;
-
-    const key = item.slice(0, index).trim();
-    const value = item.slice(index + 1).trim();
-
-    cookies[key] = decodeURIComponent(value);
-  });
-
-  return cookies;
-}
-
-function createSession(userId) {
-  const sid = crypto.randomBytes(32).toString("hex");
-
-  sessions.set(sid, {
-    userId,
-    createdAt: Date.now()
-  });
-
-  return sid;
-}
-
-function getSessionUserId(req) {
-  const cookies = parseCookies(req);
-
-  const session = cookies.sid
-    ? sessions.get(cookies.sid)
-    : null;
-
-  return session ? Number(session.userId) : null;
-}
-
-function setSession(res, sid) {
-  res.setHeader(
-    "Set-Cookie",
-    `sid=${encodeURIComponent(
-      sid
-    )}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000`
+  setTimeout(
+    () => el.classList.remove("show"),
+    3000
   );
 }
 
-function clearSession(res) {
-  res.setHeader(
-    "Set-Cookie",
-    "sid=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"
-  );
+async function api(path, options = {}){
+
+  const response =
+    await fetch(
+      API + path,
+      {
+        credentials:"include",
+
+        headers:{
+          "Content-Type":
+            "application/json",
+
+          ...(options.headers || {})
+        },
+
+        ...options
+      }
+    );
+
+  let data = {};
+
+  try{
+    data = await response.json();
+  }catch{}
+
+  if(!response.ok){
+    throw new Error(
+      data.error ||
+      "Có lỗi xảy ra."
+    );
+  }
+
+  return data;
 }
 
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = "";
+// =========================
+// NAVIGATION
+// =========================
 
-    req.on("data", (chunk) => {
-      body += chunk;
+function showPage(page){
 
-      if (body.length > 1000000) {
-        req.destroy();
-        reject(new Error("Dữ liệu gửi lên quá lớn."));
-      }
-    });
+  document
+    .querySelectorAll(".page")
+    .forEach(
+      el =>
+        el.classList.remove("active")
+    );
 
-    req.on("end", () => {
-      if (!body) {
-        resolve({});
-        return;
-      }
+  document
+    .getElementById(
+      "page-" + page
+    )
+    .classList.add("active");
 
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        reject(new Error("Dữ liệu JSON không hợp lệ."));
-      }
-    });
+  document
+    .querySelectorAll(".nav button")
+    .forEach(
+      el =>
+        el.classList.remove("active")
+    );
 
-    req.on("error", reject);
+  const nav =
+    document.getElementById(
+      "nav-" + page
+    );
+
+  if(nav){
+    nav.classList.add("active");
+  }
+
+  if(page === "tasks"){
+    loadTasks();
+  }
+
+  if(page === "ranking"){
+    loadLeaderboard();
+  }
+
+  if(page === "account"){
+    renderAccount();
+  }
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
   });
 }
 
-// =========================
-// PASSWORD
-// =========================
+function openMain(){
 
-function hashPassword(password, salt) {
-  const realSalt =
-    salt || crypto.randomBytes(16).toString("hex");
-
-  const hash = crypto
-    .scryptSync(password, realSalt, 64)
-    .toString("hex");
-
-  return {
-    hash,
-    salt: realSalt
-  };
+  window.open(
+    MAIN,
+    "_blank",
+    "noopener,noreferrer"
+  );
 }
 
-function verifyPassword(password, hash, salt) {
-  try {
-    const actual = crypto.scryptSync(
-      password,
-      salt,
-      64
+// =========================
+// AUTH
+// =========================
+
+function openAuth(){
+
+  document
+    .getElementById("authModal")
+    .classList.add("show");
+
+  showLogin();
+}
+
+function closeAuth(){
+
+  document
+    .getElementById("authModal")
+    .classList.remove("show");
+}
+
+function showLogin(){
+
+  document
+    .getElementById("loginForm")
+    .style.display = "block";
+
+  document
+    .getElementById("registerForm")
+    .style.display = "none";
+}
+
+function showRegister(){
+
+  document
+    .getElementById("loginForm")
+    .style.display = "none";
+
+  document
+    .getElementById("registerForm")
+    .style.display = "block";
+}
+
+function togglePass(id){
+
+  const input =
+    document.getElementById(id);
+
+  input.type =
+    input.type === "password"
+      ? "text"
+      : "password";
+}
+
+// =========================
+// LOGIN
+// =========================
+
+async function login(){
+
+  const identifier =
+    document
+      .getElementById(
+        "loginIdentifier"
+      )
+      .value
+      .trim();
+
+  const password =
+    document
+      .getElementById(
+        "loginPassword"
+      )
+      .value;
+
+  if(!identifier || !password){
+
+    toast(
+      "Vui lòng nhập đầy đủ."
     );
 
-    const expected = Buffer.from(hash, "hex");
+    return;
+  }
 
-    return (
-      actual.length === expected.length &&
-      crypto.timingSafeEqual(actual, expected)
+  try{
+
+    await api(
+      "/login",
+      {
+        method:"POST",
+
+        body:JSON.stringify({
+          identifier,
+          password
+        })
+      }
     );
-  } catch {
-    return false;
+
+    closeAuth();
+
+    toast(
+      "Đăng nhập thành công!"
+    );
+
+    await loadUser();
+
+  }catch(error){
+
+    toast(error.message);
+
   }
 }
 
 // =========================
-// VALIDATION
+// REGISTER
 // =========================
 
-function validUsername(username) {
-  return (
-    typeof username === "string" &&
-    /^[A-Za-z0-9_.-]{3,24}$/.test(username)
-  );
+async function register(){
+
+  const username =
+    document
+      .getElementById(
+        "registerUsername"
+      )
+      .value
+      .trim();
+
+  const email =
+    document
+      .getElementById(
+        "registerEmail"
+      )
+      .value
+      .trim();
+
+  const password =
+    document
+      .getElementById(
+        "registerPassword"
+      )
+      .value;
+
+  const confirm =
+    document
+      .getElementById(
+        "registerConfirm"
+      )
+      .value;
+
+  const agree =
+    document
+      .getElementById(
+        "agree"
+      )
+      .checked;
+
+  if(
+    !/^[A-Za-z0-9_.-]{3,24}$/
+      .test(username)
+  ){
+
+    toast(
+      "Tên người dùng phải có 3-24 ký tự."
+    );
+
+    return;
+  }
+
+  if(
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      .test(email)
+  ){
+
+    toast(
+      "Email không hợp lệ."
+    );
+
+    return;
+  }
+
+  if(password.length < 8){
+
+    toast(
+      "Mật khẩu ít nhất 8 ký tự."
+    );
+
+    return;
+  }
+
+  if(password !== confirm){
+
+    toast(
+      "Mật khẩu nhập lại không khớp."
+    );
+
+    return;
+  }
+
+  if(!agree){
+
+    toast(
+      "Bạn cần đồng ý điều khoản."
+    );
+
+    return;
+  }
+
+  // Lấy mã giới thiệu từ URL
+  const ref =
+    new URLSearchParams(
+      window.location.search
+    ).get("ref") || "";
+
+  try{
+
+    await api(
+      "/register",
+      {
+        method:"POST",
+
+        body:JSON.stringify({
+          username,
+          email,
+          password,
+          referralCode:ref
+        })
+      }
+    );
+
+    closeAuth();
+
+    toast(
+      "Đăng ký thành công!"
+    );
+
+    await loadUser();
+
+  }catch(error){
+
+    toast(error.message);
+
+  }
 }
 
-function validEmail(email) {
-  return (
-    typeof email === "string" &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  );
+// =========================
+// LOGOUT
+// =========================
+
+async function logout(){
+
+  try{
+
+    await api(
+      "/logout",
+      {
+        method:"POST"
+      }
+    );
+
+    currentUser = null;
+
+    renderHeader();
+
+    renderAccount();
+
+    showPage("home");
+
+    toast(
+      "Đã đăng xuất."
+    );
+
+  }catch(error){
+
+    toast(error.message);
+
+  }
 }
 
-function createReferralCode() {
-  return crypto
-    .randomBytes(6)
-    .toString("hex")
-    .toUpperCase();
+function renderHeader(){
+
+  document
+    .getElementById(
+      "accountButton"
+    )
+    .textContent =
+      currentUser
+        ? currentUser.username
+        : "Đăng nhập";
 }
 
 // =========================
 // USER
 // =========================
 
-async function getUserById(id) {
-  const result = await pool.query(
-    `
-    SELECT
-      u.*,
-      (
-        SELECT COUNT(*)
-        FROM users r
-        WHERE r.referred_by = u.id
-      ) AS referred_count
-    FROM users u
-    WHERE u.id = $1
-    `,
-    [id]
-  );
+async function loadUser(){
 
-  return result.rows[0] || null;
-}
+  try{
 
-async function getUserByLogin(identifier) {
-  const result = await pool.query(
-    `
-    SELECT
-      u.*,
-      (
-        SELECT COUNT(*)
-        FROM users r
-        WHERE r.referred_by = u.id
-      ) AS referred_count
-    FROM users u
-    WHERE LOWER(u.username) = LOWER($1)
-       OR LOWER(u.email) = LOWER($1)
-    LIMIT 1
-    `,
-    [identifier]
-  );
+    const data =
+      await api("/me");
 
-  return result.rows[0] || null;
-}
+    currentUser =
+      data.user || null;
 
-function publicUser(user) {
-  if (!user) return null;
+  }catch{
 
-  return {
-    id: Number(user.id),
-    username: user.username,
-    email: user.email,
-    points: Number(user.points || 0),
-    completed: Number(user.completed || 0),
-    referral_code: user.referral_code,
-    referred_count: Number(user.referred_count || 0),
-    referral_earned: Number(user.referral_earned || 0),
-    created_at: user.created_at
-  };
-}
+    currentUser = null;
 
-// =========================
-// DATABASE
-// =========================
-
-async function initDatabase() {
-  if (!pool) {
-    throw new Error(
-      "DATABASE_URL chưa được cấu hình."
-    );
   }
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
+  renderHeader();
 
-      username VARCHAR(24) UNIQUE NOT NULL,
+  renderAccount();
 
-      email VARCHAR(255) UNIQUE NOT NULL,
+  await loadDashboard();
 
-      password_hash TEXT NOT NULL,
+  await loadCheckin();
 
-      password_salt TEXT NOT NULL,
+  await loadTasks();
 
-      points INTEGER NOT NULL DEFAULT 0,
-
-      completed INTEGER NOT NULL DEFAULT 0,
-
-      referral_code VARCHAR(32) UNIQUE NOT NULL,
-
-      referred_by INTEGER
-        REFERENCES users(id)
-        ON DELETE SET NULL,
-
-      referral_rewarded BOOLEAN NOT NULL DEFAULT FALSE,
-
-      referral_earned INTEGER NOT NULL DEFAULT 0,
-
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS tasks (
-      id SERIAL PRIMARY KEY,
-
-      title TEXT NOT NULL,
-
-      description TEXT NOT NULL DEFAULT '',
-
-      kind VARCHAR(20) NOT NULL DEFAULT 'channel',
-
-      url TEXT NOT NULL,
-
-      points INTEGER NOT NULL DEFAULT 5,
-
-      active BOOLEAN NOT NULL DEFAULT TRUE,
-
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS completions (
-      id SERIAL PRIMARY KEY,
-
-      user_id INTEGER NOT NULL
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-      task_id INTEGER NOT NULL
-        REFERENCES tasks(id)
-        ON DELETE CASCADE,
-
-      points INTEGER NOT NULL,
-
-      completed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS checkins (
-      id SERIAL PRIMARY KEY,
-
-      user_id INTEGER NOT NULL
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-      checkin_date DATE NOT NULL,
-
-      points INTEGER NOT NULL,
-
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-      UNIQUE(user_id, checkin_date)
-    );
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_completions_user_time
-    ON completions(user_id, completed_at);
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_checkins_user_date
-    ON checkins(user_id, checkin_date);
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_users_referred_by
-    ON users(referred_by);
-  `);
-
-  // Thêm nhiệm vụ mặc định nếu chưa có
-  const count = await pool.query(
-    `SELECT COUNT(*)::int AS count FROM tasks`
-  );
-
-  if (Number(count.rows[0].count) === 0) {
-    const tasks = [
-      [
-        "Khám phá kênh TikTok chính",
-        "Mở kênh TikTok chính và khám phá nội dung.",
-        "channel",
-        MAIN_CHANNEL.url,
-        5
-      ],
-      [
-        "Khám phá video TikTok",
-        "Mở video TikTok và tự xem nội dung.",
-        "video",
-        MAIN_CHANNEL.url,
-        5
-      ],
-      [
-        "Khám phá kênh TikTok",
-        "Mở kênh TikTok và khám phá nội dung.",
-        "channel",
-        MAIN_CHANNEL.url,
-        5
-      ]
-    ];
-
-    for (const task of tasks) {
-      await pool.query(
-        `
-        INSERT INTO tasks
-        (title, description, kind, url, points)
-        VALUES ($1, $2, $3, $4, $5)
-        `,
-        task
-      );
-    }
-  }
-
-  console.log("PostgreSQL database ready.");
 }
 
 // =========================
 // DASHBOARD
 // =========================
 
-async function getDashboard(userId) {
-  const result = await pool.query(
-    `
-    SELECT
-      u.points,
-      u.completed,
+async function loadDashboard(){
 
-      COALESCE(
-        (
-          SELECT SUM(c.points)
-          FROM completions c
-          WHERE c.user_id = u.id
-            AND c.completed_at >= CURRENT_DATE
-        ),
-        0
-      )::int AS today
+  if(!currentUser){
 
-    FROM users u
+    points.textContent = "0";
 
-    WHERE u.id = $1
-    `,
-    [userId]
-  );
+    completed.textContent = "0";
 
-  return (
-    result.rows[0] || {
-      points: 0,
-      completed: 0,
-      today: 0
-    }
-  );
+    today.textContent = "0";
+
+    return;
+  }
+
+  try{
+
+    const data =
+      await api(
+        "/dashboard"
+      );
+
+    const dashboard =
+      data.dashboard || {};
+
+    points.textContent =
+      Number(
+        dashboard.points || 0
+      ).toLocaleString("vi-VN");
+
+    completed.textContent =
+      Number(
+        dashboard.completed || 0
+      ).toLocaleString("vi-VN");
+
+    today.textContent =
+      Number(
+        dashboard.today || 0
+      ).toLocaleString("vi-VN");
+
+  }catch{}
+
 }
 
 // =========================
 // TASKS
 // =========================
 
-async function getRandomTasks(userId) {
-  const result = await pool.query(
-    `
-    SELECT
-      id,
-      title,
-      description,
-      kind,
-      url,
-      points
+function taskHtml(task){
 
-    FROM tasks
+  const type =
+    task.kind === "channel"
+      ? "KÊNH"
+      : "VIDEO";
 
-    WHERE active = TRUE
+  return `
 
-      AND id NOT IN (
-        SELECT task_id
-        FROM completions
-        WHERE user_id = $1
-      )
+    <div class="task">
 
-    ORDER BY RANDOM()
+      <div>
 
-    LIMIT 10
-    `,
-    [userId]
-  );
+        <span class="badge">
+          ${esc(type)}
+        </span>
 
-  return result.rows;
+        <h3>
+          ${esc(task.title)}
+        </h3>
+
+        <p>
+          ${esc(task.description)}
+        </p>
+
+      </div>
+
+      <div>
+
+        <div class="task-points">
+          +${Number(task.points || 0)}
+          điểm
+        </div>
+
+        <button
+          class="btn primary"
+          style="margin-top:9px"
+          onclick="startTask(${Number(task.id)})">
+
+          Thực hiện
+
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+}
+
+async function loadTasks(){
+
+  const list =
+    document.getElementById(
+      "tasksList"
+    );
+
+  const home =
+    document.getElementById(
+      "homeTasks"
+    );
+
+  if(list){
+
+    list.innerHTML =
+      '<div class="loading">Đang tải...</div>';
+
+  }
+
+  try{
+
+    if(!currentUser){
+
+      const html =
+        '<div class="empty">Đăng nhập để nhận nhiệm vụ.</div>';
+
+      if(list)
+        list.innerHTML = html;
+
+      if(home)
+        home.innerHTML = html;
+
+      return;
+    }
+
+    const data =
+      await api(
+        "/tasks/random"
+      );
+
+    cachedTasks =
+      data.tasks || [];
+
+    const html =
+      cachedTasks
+        .map(taskHtml)
+        .join("")
+      ||
+      '<div class="empty">Chưa có nhiệm vụ.</div>';
+
+    if(list)
+      list.innerHTML = html;
+
+    if(home)
+      home.innerHTML =
+        cachedTasks
+          .slice(0,3)
+          .map(taskHtml)
+          .join("")
+        ||
+        '<div class="empty">Chưa có nhiệm vụ.</div>';
+
+  }catch(error){
+
+    const html =
+      `<div class="empty">
+        ${esc(error.message)}
+      </div>`;
+
+    if(list)
+      list.innerHTML = html;
+
+    if(home)
+      home.innerHTML = html;
+
+  }
 }
 
 // =========================
 // COMPLETE TASK
 // =========================
 
-async function completeTask(userId, taskId) {
-  const client = await pool.connect();
+async function startTask(id){
 
-  try {
-    await client.query("BEGIN");
+  if(!currentUser){
 
-    const taskResult = await client.query(
-      `
-      SELECT id, points
-      FROM tasks
-      WHERE id = $1
-        AND active = TRUE
-      FOR SHARE
-      `,
-      [taskId]
-    );
+    openAuth();
 
-    if (!taskResult.rows.length) {
-      throw new Error(
-        "Nhiệm vụ không tồn tại hoặc đã bị tắt."
-      );
-    }
-
-    const already = await client.query(
-      `
-      SELECT id
-      FROM completions
-      WHERE user_id = $1
-        AND task_id = $2
-      LIMIT 1
-      `,
-      [userId, taskId]
-    );
-
-    if (already.rows.length) {
-      throw new Error(
-        "Bạn đã hoàn thành nhiệm vụ này."
-      );
-    }
-
-    const taskPoints = Number(
-      taskResult.rows[0].points
-    );
-
-    await client.query(
-      `
-      INSERT INTO completions
-      (user_id, task_id, points)
-      VALUES ($1, $2, $3)
-      `,
-      [userId, taskId, taskPoints]
-    );
-
-    const userResult = await client.query(
-      `
-      UPDATE users
-
-      SET
-        points = points + $1,
-        completed = completed + 1
-
-      WHERE id = $2
-
-      RETURNING
-        id,
-        points,
-        referred_by,
-        referral_rewarded
-      `,
-      [taskPoints, userId]
-    );
-
-    const user = userResult.rows[0];
-
-    let referralActivated = false;
-
-    // =====================================
-    // THƯỞNG GIỚI THIỆU
-    // =====================================
-
-    if (
-      user.referred_by &&
-      !user.referral_rewarded &&
-      Number(user.points) >= REFERRAL_THRESHOLD
-    ) {
-      const inviterResult = await client.query(
-        `
-        UPDATE users
-
-        SET
-          points = points + $1,
-          referral_earned =
-            referral_earned + $1
-
-        WHERE id = $2
-
-        RETURNING id
-        `,
-        [
-          REFERRAL_REWARD,
-          user.referred_by
-        ]
-      );
-
-      if (inviterResult.rows.length) {
-        await client.query(
-          `
-          UPDATE users
-
-          SET referral_rewarded = TRUE
-
-          WHERE id = $1
-          `,
-          [userId]
-        );
-
-        referralActivated = true;
-      }
-    }
-
-    await client.query("COMMIT");
-
-    return {
-      points: taskPoints,
-      total_points: Number(user.points),
-      referralActivated
-    };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
+    return;
   }
-}
 
-// =========================
-// CHECK-IN
-// =========================
+  const task =
+    cachedTasks.find(
+      item =>
+        Number(item.id) ===
+        Number(id)
+    );
 
-async function getCheckinStatus(userId) {
-  const result = await pool.query(
-    `
-    SELECT EXISTS(
-      SELECT 1
-      FROM checkins
-      WHERE user_id = $1
-        AND checkin_date = CURRENT_DATE
-    ) AS checked_in
-    `,
-    [userId]
+  if(!task){
+
+    toast(
+      "Nhiệm vụ không còn. Hãy làm mới."
+    );
+
+    return;
+  }
+
+  window.open(
+    task.url,
+    "_blank",
+    "noopener,noreferrer"
   );
 
-  return {
-    checked_in: result.rows[0].checked_in,
-    points: CHECKIN_POINTS
-  };
-}
-
-async function doCheckin(userId) {
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    const exists = await client.query(
-      `
-      SELECT id
-      FROM checkins
-      WHERE user_id = $1
-        AND checkin_date = CURRENT_DATE
-      LIMIT 1
-      `,
-      [userId]
+  const completed =
+    confirm(
+      "Bạn đã thực sự hoàn thành nhiệm vụ chưa?\n\n" +
+      "Chỉ bấm OK nếu bạn đã hoàn thành."
     );
 
-    if (exists.rows.length) {
-      throw new Error(
-        "Bạn đã điểm danh hôm nay rồi."
+  if(!completed){
+    return;
+  }
+
+  try{
+
+    const data =
+      await api(
+        "/tasks/complete",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            taskId:Number(task.id)
+          })
+        }
       );
+
+    if(data.referralActivated){
+
+      toast(
+        `Hoàn thành +${Number(data.points)} điểm. ` +
+        `Người bạn giới thiệu đã đạt 20 điểm, ` +
+        `bạn nhận thêm +20 điểm!`
+      );
+
+    }else{
+
+      toast(
+        `Hoàn thành +${Number(data.points)} điểm!`
+      );
+
     }
 
-    await client.query(
-      `
-      INSERT INTO checkins
-      (user_id, checkin_date, points)
+    await loadUser();
 
-      VALUES
-      ($1, CURRENT_DATE, $2)
-      `,
-      [userId, CHECKIN_POINTS]
-    );
+    await loadLeaderboard();
 
-    const result = await client.query(
-      `
-      UPDATE users
+  }catch(error){
 
-      SET points = points + $1
+    toast(error.message);
 
-      WHERE id = $2
-
-      RETURNING points
-      `,
-      [CHECKIN_POINTS, userId]
-    );
-
-    await client.query("COMMIT");
-
-    return {
-      points: CHECKIN_POINTS,
-      total_points: Number(
-        result.rows[0].points
-      )
-    };
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
   }
 }
 
@@ -732,604 +1746,531 @@ async function doCheckin(userId) {
 // LEADERBOARD
 // =========================
 
-async function getLeaderboard(period) {
-  let condition;
+function changeRanking(period){
 
-  if (period === "week") {
-    condition =
-      "c.completed_at >= CURRENT_DATE - INTERVAL '6 days'";
-  } else {
-    condition =
-      "c.completed_at >= CURRENT_DATE";
+  currentRanking = period;
+
+  document
+    .getElementById("dayTab")
+    .classList.toggle(
+      "active",
+      period === "day"
+    );
+
+  document
+    .getElementById("weekTab")
+    .classList.toggle(
+      "active",
+      period === "week"
+    );
+
+  document
+    .getElementById("rewardText")
+    .textContent =
+      period === "day"
+        ? "🥇 50 điểm · 🥈 30 điểm · 🥉 20 điểm"
+        : "🥇 150 điểm · 🥈 100 điểm · 🥉 50 điểm";
+
+  loadLeaderboard();
+}
+
+async function loadLeaderboard(){
+
+  const list =
+    document.getElementById(
+      "leaderboardList"
+    );
+
+  list.innerHTML =
+    '<div class="loading">Đang tải...</div>';
+
+  try{
+
+    const data =
+      await api(
+        "/leaderboard?period=" +
+        currentRanking
+      );
+
+    const rows =
+      data.leaderboard || [];
+
+    if(!rows.length){
+
+      list.innerHTML =
+        '<div class="empty">Chưa có dữ liệu.</div>';
+
+      return;
+    }
+
+    list.innerHTML =
+      rows
+        .map(row => {
+
+          const rank =
+            Number(row.rank);
+
+          let medal = rank;
+
+          if(rank === 1)
+            medal = "🥇";
+
+          if(rank === 2)
+            medal = "🥈";
+
+          if(rank === 3)
+            medal = "🥉";
+
+          return `
+
+            <div
+              class="rank-row rank-${
+                rank <= 3
+                  ? rank
+                  : ""
+              }">
+
+              <div class="rank">
+                ${medal}
+              </div>
+
+              <div>
+                <b>
+                  ${esc(row.username)}
+                </b>
+              </div>
+
+              <div class="rank-points">
+                ${Number(
+                  row.points || 0
+                ).toLocaleString("vi-VN")}
+                điểm
+              </div>
+
+            </div>
+
+          `;
+
+        })
+        .join("");
+
+  }catch(error){
+
+    list.innerHTML =
+      `<div class="empty">
+        ${esc(error.message)}
+      </div>`;
+
   }
-
-  const result = await pool.query(`
-    SELECT
-      u.username,
-
-      COALESCE(
-        SUM(c.points),
-        0
-      )::int AS points
-
-    FROM users u
-
-    LEFT JOIN completions c
-      ON c.user_id = u.id
-      AND ${condition}
-
-    GROUP BY
-      u.id,
-      u.username
-
-    HAVING
-      COALESCE(SUM(c.points), 0) > 0
-
-    ORDER BY
-      points DESC,
-      u.username ASC
-
-    LIMIT 50
-  `);
-
-  return result.rows.map((row, index) => ({
-    rank: index + 1,
-    username: row.username,
-    points: Number(row.points)
-  }));
 }
 
 // =========================
-// API
+// CHECK-IN
 // =========================
 
-async function handleAPI(req, res, url) {
-  const method = req.method;
-  const userId = getSessionUserId(req);
+async function loadCheckin(){
 
-  // -------------------------
-  // REGISTER
-  // -------------------------
-
-  if (
-    method === "POST" &&
-    url.pathname === "/api/register"
-  ) {
-    const body = await readBody(req);
-
-    const username =
-      String(body.username || "").trim();
-
-    const email =
-      String(body.email || "")
-        .trim()
-        .toLowerCase();
-
-    const password =
-      String(body.password || "");
-
-    const referralCode =
-      String(body.referralCode || "")
-        .trim()
-        .toUpperCase();
-
-    if (!validUsername(username)) {
-      throw new Error(
-        "Tên người dùng phải có 3-24 ký tự."
-      );
-    }
-
-    if (!validEmail(email)) {
-      throw new Error(
-        "Email không hợp lệ."
-      );
-    }
-
-    if (
-      password.length < 8 ||
-      password.length > 72
-    ) {
-      throw new Error(
-        "Mật khẩu phải từ 8 đến 72 ký tự."
-      );
-    }
-
-    const duplicate = await pool.query(
-      `
-      SELECT id
-      FROM users
-
-      WHERE LOWER(username) = LOWER($1)
-         OR LOWER(email) = LOWER($2)
-
-      LIMIT 1
-      `,
-      [username, email]
+  const status =
+    document.getElementById(
+      "checkinStatus"
     );
 
-    if (duplicate.rows.length) {
-      throw new Error(
-        "Tên người dùng hoặc email đã tồn tại."
+  const button =
+    document.getElementById(
+      "checkinBtn"
+    );
+
+  if(!currentUser){
+
+    status.textContent =
+      "Đăng nhập để điểm danh";
+
+    button.disabled = true;
+
+    button.textContent =
+      "Điểm danh";
+
+    return;
+  }
+
+  try{
+
+    const data =
+      await api(
+        "/checkin/status"
       );
+
+    if(data.checked_in){
+
+      status.textContent =
+        "✅ Đã điểm danh hôm nay";
+
+      button.disabled = true;
+
+      button.textContent =
+        "Đã điểm danh";
+
+    }else{
+
+      status.textContent =
+        "🎁 Chưa điểm danh hôm nay";
+
+      button.disabled = false;
+
+      button.textContent =
+        "+5 điểm";
+
     }
 
-    let referredBy = null;
+  }catch{
 
-    if (referralCode) {
-      const ref = await pool.query(
-        `
-        SELECT id
-        FROM users
-        WHERE referral_code = $1
-        LIMIT 1
-        `,
-        [referralCode]
+    status.textContent =
+      "Không tải được trạng thái";
+
+  }
+}
+
+async function doCheckin(){
+
+  if(!currentUser){
+
+    openAuth();
+
+    return;
+  }
+
+  try{
+
+    const data =
+      await api(
+        "/checkin",
+        {
+          method:"POST"
+        }
       );
 
-      if (!ref.rows.length) {
-        throw new Error(
-          "Mã giới thiệu không hợp lệ."
-        );
-      }
+    toast(
+      `Điểm danh thành công +${Number(
+        data.points || 5
+      )} điểm!`
+    );
 
-      referredBy = Number(ref.rows[0].id);
-    }
+    await loadUser();
 
-    const passwordData =
-      hashPassword(password);
+  }catch(error){
 
-    let user;
+    toast(error.message);
 
-    try {
-      const result = await pool.query(
-        `
-        INSERT INTO users
-        (
-          username,
-          email,
-          password_hash,
-          password_salt,
-          referral_code,
-          referred_by
+  }
+}
+
+// =========================
+// REFERRAL
+// =========================
+
+async function getReferral(){
+
+  return await api(
+    "/referral"
+  );
+
+}
+
+async function copyText(text){
+
+  try{
+
+    await navigator.clipboard
+      .writeText(text);
+
+    toast(
+      "Đã sao chép!"
+    );
+
+  }catch{
+
+    toast(
+      "Không thể sao chép tự động."
+    );
+
+  }
+}
+
+async function renderReferral(){
+
+  if(!currentUser){
+    return "";
+  }
+
+  try{
+
+    const data =
+      await getReferral();
+
+    return `
+
+      <div class="card">
+
+        <h2>
+          👥 Giới thiệu bạn bè
+        </h2>
+
+        <p
+          style="
+            color:#6f788a;
+            line-height:1.6
+          ">
+
+          Người tham gia từ link của bạn
+          phải đạt
+
+          <b>
+            ${Number(data.threshold)}
+            điểm
+          </b>.
+
+          Khi đạt mốc này,
+          bạn nhận
+
+          <b>
+            +${Number(data.reward)}
+            điểm
+          </b>
+
+          một lần.
+
+        </p>
+
+        <div class="ref-box">
+
+          <div>
+            Mã giới thiệu
+          </div>
+
+          <div class="ref-code">
+            ${esc(data.code)}
+          </div>
+
+          <button
+            class="btn dark"
+            onclick="copyText(${JSON.stringify(
+              data.code
+            )})">
+
+            Sao chép mã
+
+          </button>
+
+          <div>
+            Link giới thiệu
+          </div>
+
+          <div class="ref-link">
+            ${esc(data.link)}
+          </div>
+
+          <button
+            class="btn primary"
+            onclick="copyText(${JSON.stringify(
+              data.link
+            )})">
+
+            Sao chép link
+
+          </button>
+
+          <div class="info">
+
+            <span>
+              Đã giới thiệu
+            </span>
+
+            <b>
+              ${Number(
+                data.referred_count || 0
+              )}
+            </b>
+
+          </div>
+
+          <div class="info">
+
+            <span>
+              Điểm nhận từ giới thiệu
+            </span>
+
+            <b>
+              ${Number(
+                data.earned || 0
+              )}
+            </b>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }catch(error){
+
+    return `
+
+      <div class="card">
+
+        <p>
+          ${esc(error.message)}
+        </p>
+
+      </div>
+
+    `;
+
+  }
+}
+
+// =========================
+// ACCOUNT
+// =========================
+
+async function renderAccount(){
+
+  const box =
+    document.getElementById(
+      "accountContent"
+    );
+
+  if(!currentUser){
+
+    box.innerHTML = `
+
+      <div class="card">
+
+        <h2>
+          Chưa đăng nhập
+        </h2>
+
+        <p
+          style="
+            color:#6f788a;
+            line-height:1.6
+          ">
+
+          Đăng nhập để lưu điểm,
+          điểm danh và nhận thưởng
+          giới thiệu.
+
+        </p>
+
+        <button
+          class="btn primary"
+          onclick="openAuth()">
+
+          Đăng nhập / Đăng ký
+
+        </button>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  box.innerHTML = `
+
+    <div class="card">
+
+      <h2>
+        Xin chào,
+        ${esc(currentUser.username)}
+        👋
+      </h2>
+
+      <div class="profile">
+
+        <div class="info">
+          <span>Email</span>
+          <b>${esc(currentUser.email)}</b>
+        </div>
+
+        <div class="info">
+          <span>Điểm</span>
+          <b>
+            ${Number(
+              currentUser.points || 0
+            ).toLocaleString("vi-VN")}
+          </b>
+        </div>
+
+        <div class="info">
+          <span>Hoàn thành</span>
+          <b>
+            ${Number(
+              currentUser.completed || 0
+            )}
+          </b>
+        </div>
+
+      </div>
+
+      <button
+        class="btn soft"
+        style="
+          width:100%;
+          margin-top:18px
+        "
+        onclick="logout()">
+
+        Đăng xuất
+
+      </button>
+
+    </div>
+
+  `;
+
+  box.innerHTML +=
+    await renderReferral();
+
+}
+
+// =========================
+// MODAL CLOSE
+// =========================
+
+document
+  .getElementById("authModal")
+  .addEventListener(
+    "click",
+    function(event){
+
+      if(
+        event.target ===
+        document.getElementById(
+          "authModal"
         )
-
-        VALUES
-        ($1, $2, $3, $4, $5, $6)
-
-        RETURNING *
-        `,
-        [
-          username,
-          email,
-          passwordData.hash,
-          passwordData.salt,
-          createReferralCode(),
-          referredBy
-        ]
-      );
-
-      user = result.rows[0];
-    } catch (error) {
-      if (error.code === "23505") {
-        throw new Error(
-          "Tên người dùng hoặc email đã tồn tại."
-        );
+      ){
+        closeAuth();
       }
 
-      throw error;
     }
-
-    const sid = createSession(user.id);
-
-    setSession(res, sid);
-
-    return sendJSON(res, 201, {
-      user: publicUser(user)
-    });
-  }
-
-  // -------------------------
-  // LOGIN
-  // -------------------------
-
-  if (
-    method === "POST" &&
-    url.pathname === "/api/login"
-  ) {
-    const body = await readBody(req);
-
-    const identifier =
-      String(body.identifier || "").trim();
-
-    const password =
-      String(body.password || "");
-
-    const user =
-      await getUserByLogin(identifier);
-
-    if (
-      !user ||
-      !verifyPassword(
-        password,
-        user.password_hash,
-        user.password_salt
-      )
-    ) {
-      throw new Error(
-        "Tài khoản hoặc mật khẩu không đúng."
-      );
-    }
-
-    const sid = createSession(user.id);
-
-    setSession(res, sid);
-
-    return sendJSON(res, 200, {
-      user: publicUser(user)
-    });
-  }
-
-  // -------------------------
-  // LOGOUT
-  // -------------------------
-
-  if (
-    method === "POST" &&
-    url.pathname === "/api/logout"
-  ) {
-    const cookies = parseCookies(req);
-
-    if (cookies.sid) {
-      sessions.delete(cookies.sid);
-    }
-
-    clearSession(res);
-
-    return sendJSON(res, 200, {
-      ok: true
-    });
-  }
-
-  // -------------------------
-  // ME
-  // -------------------------
-
-  if (
-    method === "GET" &&
-    url.pathname === "/api/me"
-  ) {
-    if (!userId) {
-      return sendJSON(res, 200, {
-        user: null
-      });
-    }
-
-    const user =
-      await getUserById(userId);
-
-    return sendJSON(res, 200, {
-      user: publicUser(user)
-    });
-  }
-
-  // Những API dưới đây cần đăng nhập
-  if (!userId) {
-    throw new Error(
-      "Bạn cần đăng nhập."
-    );
-  }
-
-  // -------------------------
-  // DASHBOARD
-  // -------------------------
-
-  if (
-    method === "GET" &&
-    url.pathname === "/api/dashboard"
-  ) {
-    return sendJSON(res, 200, {
-      dashboard:
-        await getDashboard(userId)
-    });
-  }
-
-  // -------------------------
-  // RANDOM TASKS
-  // -------------------------
-
-  if (
-    method === "GET" &&
-    url.pathname === "/api/tasks/random"
-  ) {
-    return sendJSON(res, 200, {
-      tasks:
-        await getRandomTasks(userId)
-    });
-  }
-
-  // -------------------------
-  // COMPLETE TASK
-  // -------------------------
-
-  if (
-    method === "POST" &&
-    url.pathname === "/api/tasks/complete"
-  ) {
-    const body = await readBody(req);
-
-    const taskId = Number(body.taskId);
-
-    if (
-      !Number.isInteger(taskId) ||
-      taskId <= 0
-    ) {
-      throw new Error(
-        "Task ID không hợp lệ."
-      );
-    }
-
-    return sendJSON(
-      res,
-      200,
-      await completeTask(
-        userId,
-        taskId
-      )
-    );
-  }
-
-  // -------------------------
-  // LEADERBOARD
-  // -------------------------
-
-  if (
-    method === "GET" &&
-    url.pathname === "/api/leaderboard"
-  ) {
-    const period =
-      url.searchParams.get("period") ===
-      "week"
-        ? "week"
-        : "day";
-
-    return sendJSON(res, 200, {
-      leaderboard:
-        await getLeaderboard(period),
-
-      period
-    });
-  }
-
-  // -------------------------
-  // CHECKIN STATUS
-  // -------------------------
-
-  if (
-    method === "GET" &&
-    url.pathname === "/api/checkin/status"
-  ) {
-    return sendJSON(
-      res,
-      200,
-      await getCheckinStatus(userId)
-    );
-  }
-
-  // -------------------------
-  // CHECKIN
-  // -------------------------
-
-  if (
-    method === "POST" &&
-    url.pathname === "/api/checkin"
-  ) {
-    return sendJSON(
-      res,
-      200,
-      await doCheckin(userId)
-    );
-  }
-
-  // -------------------------
-  // REFERRAL
-  // -------------------------
-
-  if (
-    method === "GET" &&
-    url.pathname === "/api/referral"
-  ) {
-    const user =
-      await getUserById(userId);
-
-    const host =
-      req.headers.host;
-
-    const protocol =
-      req.headers["x-forwarded-proto"] ||
-      "https";
-
-    const link =
-      `${protocol}://${host}/?ref=${encodeURIComponent(
-        user.referral_code
-      )}`;
-
-    return sendJSON(res, 200, {
-      code: user.referral_code,
-
-      link,
-
-      threshold:
-        REFERRAL_THRESHOLD,
-
-      reward:
-        REFERRAL_REWARD,
-
-      referred_count:
-        Number(user.referred_count || 0),
-
-      earned:
-        Number(user.referral_earned || 0)
-    });
-  }
-
-  throw new Error(
-    "API không tồn tại."
   );
-}
-
-// =========================
-// SERVER
-// =========================
-
-async function handleRequest(req, res) {
-  const url = new URL(
-    req.url,
-    `http://${req.headers.host || "localhost"}`
-  );
-
-  // Health check
-  if (url.pathname === "/health") {
-    return sendJSON(res, 200, {
-      ok: true,
-      database: !!pool
-    });
-  }
-
-  // API
-  if (url.pathname.startsWith("/api/")) {
-    try {
-      return await handleAPI(
-        req,
-        res,
-        url
-      );
-    } catch (error) {
-      console.error(
-        "API ERROR:",
-        error
-      );
-
-      const status =
-        error.message ===
-        "Bạn cần đăng nhập."
-          ? 401
-          : 400;
-
-      return sendJSON(res, status, {
-        error:
-          error.message ||
-          "Server error."
-      });
-    }
-  }
-
-  // Static files
-  if (
-    req.method !== "GET" &&
-    req.method !== "HEAD"
-  ) {
-    return sendText(
-      res,
-      405,
-      "Method Not Allowed"
-    );
-  }
-
-  let filePath =
-    path.join(
-      __dirname,
-      "index.html"
-    );
-
-  if (
-    url.pathname !== "/" &&
-    url.pathname !== "/index.html"
-  ) {
-    const requested =
-      path.join(
-        __dirname,
-        url.pathname.replace(/^\/+/, "")
-      );
-
-    if (
-      fs.existsSync(requested) &&
-      fs.statSync(requested).isFile()
-    ) {
-      filePath = requested;
-    }
-  }
-
-  if (!fs.existsSync(filePath)) {
-    return sendText(
-      res,
-      404,
-      "Cannot GET /"
-    );
-  }
-
-  const ext =
-    path.extname(filePath).toLowerCase();
-
-  const contentTypes = {
-    ".html":
-      "text/html; charset=utf-8",
-    ".css":
-      "text/css; charset=utf-8",
-    ".js":
-      "application/javascript; charset=utf-8",
-    ".json":
-      "application/json; charset=utf-8",
-    ".png":
-      "image/png",
-    ".jpg":
-      "image/jpeg",
-    ".jpeg":
-      "image/jpeg",
-    ".svg":
-      "image/svg+xml"
-  };
-
-  res.writeHead(200, {
-    "Content-Type":
-      contentTypes[ext] ||
-      "application/octet-stream"
-  });
-
-  fs.createReadStream(
-    filePath
-  ).pipe(res);
-}
 
 // =========================
 // START
 // =========================
 
-async function start() {
-  try {
-    await initDatabase();
+(async function(){
 
-    const server =
-      http.createServer(
-        handleRequest
-      );
+  await loadUser();
 
-    server.listen(
-      PORT,
-      HOST,
-      () => {
-        console.log(
-          `Server running on ${HOST}:${PORT}`
-        );
-      }
-    );
-  } catch (error) {
-    console.error(
-      "SERVER START ERROR:",
-      error
-    );
+  await loadLeaderboard();
 
-    process.exit(1);
-  }
-}
+})();
 
-start();
+</script>
+
+</body>
+</html>
