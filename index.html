@@ -1,3240 +1,1584 @@
 <!DOCTYPE html>
+
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Nhiệm Vụ Điểm</title>
-
-  <meta
-    name="description"
-    content="Nhiệm Vụ Điểm - khám phá nhiệm vụ, tích điểm và theo dõi bảng xếp hạng."
-  >
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    :root {
-      --bg: #0b0b12;
-      --card: #151521;
-      --card2: #1b1b2a;
-      --border: rgba(255,255,255,.08);
-      --text: #ffffff;
-      --muted: #9b9bad;
-      --primary: #7c4dff;
-      --primary2: #a66bff;
-      --green: #31d17c;
-      --red: #ff5f6d;
-      --yellow: #ffc857;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family:
-        Inter,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-
-      background:
-        radial-gradient(
-          circle at top left,
-          rgba(124,77,255,.18),
-          transparent 35%
-        ),
-        var(--bg);
-
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    button,
-    input {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .container {
-      width: min(1120px, calc(100% - 32px));
-      margin: auto;
-    }
-
-    /* =========================
-       HEADER
-    ========================== */
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-
-      background: rgba(11,11,18,.86);
-      backdrop-filter: blur(18px);
-
-      border-bottom: 1px solid var(--border);
-    }
-
-    .header-inner {
-      min-height: 72px;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      gap: 20px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      font-size: 19px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .logo-icon {
-      width: 38px;
-      height: 38px;
-
-      display: grid;
-      place-items: center;
-
-      border-radius: 12px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary2)
-        );
-
-      box-shadow:
-        0 8px 30px rgba(124,77,255,.3);
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    nav button {
-      border: 0;
-      background: transparent;
-
-      color: var(--muted);
-
-      padding: 10px 14px;
-      border-radius: 10px;
-
-      transition: .2s;
-    }
-
-    nav button:hover,
-    nav button.active {
-      color: white;
-      background: rgba(124,77,255,.13);
-    }
-
-    .login-header {
-      border: 0;
-      color: white;
-
-      padding: 11px 17px;
-      border-radius: 11px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary2)
-        );
-
-      font-weight: 700;
-    }
-
-    /* =========================
-       MAIN
-    ========================== */
-
-    main {
-      padding: 40px 0 70px;
-    }
-
-    .page {
-      display: none;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    /* =========================
-       HERO
-    ========================== */
-
-    .hero {
-      display: grid;
-      grid-template-columns: 1.3fr .7fr;
-
-      gap: 24px;
-      margin-bottom: 24px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nhiệm Vụ Điểm</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f5f7fb;
+  color:#182033;
+}
+
+button{
+  border:0;
+  cursor:pointer;
+  font-family:inherit;
+}
+
+.topbar{
+  height:68px;
+  background:#fff;
+  border-bottom:1px solid #e7eaf0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 6%;
+  position:sticky;
+  top:0;
+  z-index:20;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:800;
+}
+
+.logo span{
+  color:#ff2d55;
+}
+
+.nav{
+  display:flex;
+  gap:8px;
+}
+
+.nav button{
+  background:transparent;
+  padding:10px 15px;
+  border-radius:10px;
+  font-weight:600;
+  color:#586174;
+}
+
+.nav button.active,
+.nav button:hover{
+  background:#fff0f3;
+  color:#ff2d55;
+}
+
+.account-btn{
+  background:#182033;
+  color:white;
+  padding:10px 16px;
+  border-radius:10px;
+  font-weight:700;
+}
+
+.container{
+  width:min(1100px,92%);
+  margin:30px auto 60px;
+}
+
+.page{
+  display:none;
+}
+
+.page.active{
+  display:block;
+}
+
+.hero{
+  background:linear-gradient(135deg,#181c2b,#30384f);
+  color:#fff;
+  padding:36px;
+  border-radius:20px;
+  margin-bottom:22px;
+}
+
+.hero h1{
+  font-size:34px;
+  margin-bottom:10px;
+}
+
+.hero p{
+  color:#dce1ec;
+  line-height:1.6;
+}
+
+.main-channel{
+  margin-top:22px;
+  background:#fff;
+  color:#182033;
+  padding:18px;
+  border-radius:15px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+}
+
+.main-channel strong{
+  display:block;
+  margin-bottom:5px;
+}
+
+.main-channel small{
+  color:#6d7586;
+}
+
+.primary{
+  background:#ff2d55;
+  color:#fff;
+  padding:12px 18px;
+  border-radius:10px;
+  font-weight:700;
+}
+
+.secondary{
+  background:#edf0f5;
+  color:#182033;
+  padding:12px 18px;
+  border-radius:10px;
+  font-weight:700;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-bottom:22px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e7eaf0;
+  border-radius:16px;
+  padding:22px;
+}
+
+.stat-title{
+  color:#727b8d;
+  font-size:14px;
+  margin-bottom:8px;
+}
+
+.stat-value{
+  font-size:30px;
+  font-weight:800;
+}
+
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+.section-title h2{
+  font-size:23px;
+}
+
+.task-list{
+  display:grid;
+  gap:14px;
+}
+
+.task{
+  background:#fff;
+  border:1px solid #e7eaf0;
+  border-radius:16px;
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+}
+
+.task-left{
+  flex:1;
+}
+
+.task-badge{
+  display:inline-block;
+  background:#fff0f3;
+  color:#ff2d55;
+  font-size:12px;
+  padding:5px 9px;
+  border-radius:20px;
+  font-weight:700;
+  margin-bottom:9px;
+}
+
+.task h3{
+  margin-bottom:7px;
+}
+
+.task p{
+  color:#70798b;
+  line-height:1.5;
+}
+
+.points{
+  font-size:20px;
+  font-weight:800;
+  color:#ff2d55;
+  white-space:nowrap;
+}
+
+.empty{
+  text-align:center;
+  padding:35px;
+  color:#747d8d;
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.tabs button{
+  padding:11px 18px;
+  border-radius:10px;
+  background:#e9edf3;
+  font-weight:700;
+}
+
+.tabs button.active{
+  background:#182033;
+  color:#fff;
+}
+
+.leaderboard{
+  background:#fff;
+  border:1px solid #e7eaf0;
+  border-radius:16px;
+  overflow:hidden;
+}
+
+.rank-row{
+  display:grid;
+  grid-template-columns:70px 1fr 120px;
+  align-items:center;
+  padding:17px 20px;
+  border-bottom:1px solid #edf0f4;
+}
+
+.rank-row:last-child{
+  border-bottom:0;
+}
+
+.rank{
+  font-size:20px;
+  font-weight:800;
+}
+
+.rank-name{
+  font-weight:700;
+}
+
+.rank-points{
+  text-align:right;
+  font-weight:800;
+}
+
+.rank-1{
+  background:#fff9e8;
+}
+
+.rank-2{
+  background:#f6f8fb;
+}
+
+.rank-3{
+  background:#fff4ee;
+}
+
+.reward{
+  margin-top:18px;
+  background:#f7f8fb;
+  border-radius:14px;
+  padding:18px;
+}
+
+.reward strong{
+  display:block;
+  margin-bottom:10px;
+}
+
+.reward-line{
+  display:flex;
+  justify-content:space-between;
+  padding:5px 0;
+  color:#5f6879;
+}
+
+.form-box{
+  max-width:500px;
+  margin:auto;
+}
+
+.form-group{
+  margin-bottom:15px;
+}
+
+.form-group label{
+  display:block;
+  margin-bottom:7px;
+  font-weight:700;
+}
+
+.form-group input{
+  width:100%;
+  padding:13px;
+  border:1px solid #dce1e9;
+  border-radius:10px;
+  outline:none;
+  font-size:15px;
+}
+
+.form-group input:focus{
+  border-color:#ff2d55;
+}
+
+.profile-info{
+  display:grid;
+  gap:12px;
+}
+
+.info-row{
+  display:flex;
+  justify-content:space-between;
+  padding:14px;
+  background:#f7f8fb;
+  border-radius:10px;
+}
+
+.notice{
+  background:#fff8e8;
+  border:1px solid #f4df9a;
+  color:#725c15;
+  padding:14px;
+  border-radius:12px;
+  margin-bottom:18px;
+  line-height:1.5;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:100;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:min(450px,100%);
+  background:#fff;
+  border-radius:18px;
+  padding:25px;
+  position:relative;
+}
+
+.close{
+  position:absolute;
+  top:15px;
+  right:17px;
+  background:#edf0f5;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  font-size:20px;
+}
+
+.modal h2{
+  margin-bottom:20px;
+}
+
+.switch{
+  text-align:center;
+  margin-top:15px;
+  color:#667084;
+}
+
+.switch button{
+  background:none;
+  color:#ff2d55;
+  font-weight:700;
+}
+
+.check{
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  margin:14px 0;
+  font-size:14px;
+  color:#60697a;
+}
+
+.password-wrap{
+  position:relative;
+}
+
+.password-wrap input{
+  padding-right:70px;
+}
+
+.show-password{
+  position:absolute;
+  right:8px;
+  top:7px;
+  padding:7px 9px;
+  border-radius:7px;
+  background:#edf0f5;
+  color:#4e5769;
+}
+
+.toast{
+  position:fixed;
+  right:20px;
+  bottom:20px;
+  background:#182033;
+  color:white;
+  padding:14px 18px;
+  border-radius:10px;
+  display:none;
+  z-index:200;
+  max-width:350px;
+}
+
+.toast.show{
+  display:block;
+}
+
+.loading{
+  text-align:center;
+  padding:30px;
+  color:#717a8c;
+}
+
+@media(max-width:750px){
+  .topbar{
+    padding:0 4%;
+  }
+
+  .logo{
+    font-size:18px;
+  }
+
+  .nav{
+    display:none;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .hero{
+    padding:25px;
+  }
+
+  .hero h1{
+    font-size:27px;
+  }
+
+  .main-channel{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .task{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .rank-row{
+    grid-template-columns:55px 1fr 90px;
+    padding:15px;
+  }
+}
+</style>
 
-    .hero-main {
-      position: relative;
-      overflow: hidden;
-
-      min-height: 270px;
-
-      padding: 40px;
-
-      border: 1px solid var(--border);
-      border-radius: 24px;
-
-      background:
-        radial-gradient(
-          circle at 80% 20%,
-          rgba(166,107,255,.25),
-          transparent 35%
-        ),
-        linear-gradient(
-          135deg,
-          #171425,
-          #12121b
-        );
-    }
-
-    .hero-main h1 {
-      max-width: 620px;
-
-      font-size: clamp(32px, 5vw, 52px);
-      line-height: 1.05;
-
-      margin-bottom: 16px;
-    }
-
-    .hero-main h1 span {
-      color: var(--primary2);
-    }
-
-    .hero-main p {
-      max-width: 600px;
-
-      color: var(--muted);
-      line-height: 1.7;
-
-      margin-bottom: 26px;
-    }
-
-    .hero-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .btn-primary {
-      border: 0;
-
-      padding: 13px 19px;
-      border-radius: 12px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary2)
-        );
-
-      color: white;
-      font-weight: 700;
-    }
-
-    .btn-secondary {
-      border: 1px solid var(--border);
-
-      padding: 13px 19px;
-      border-radius: 12px;
-
-      background: rgba(255,255,255,.04);
-      color: white;
-    }
-
-    .main-channel {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-
-      padding: 28px;
-
-      border-radius: 24px;
-      border: 1px solid var(--border);
-
-      background: var(--card);
-    }
-
-    .channel-label {
-      color: var(--muted);
-      font-size: 13px;
-
-      margin-bottom: 13px;
-    }
-
-    .channel-name {
-      font-size: 25px;
-      font-weight: 800;
-
-      margin-bottom: 8px;
-    }
-
-    .channel-url {
-      color: var(--primary2);
-      font-size: 14px;
-
-      margin-bottom: 22px;
-
-      word-break: break-all;
-    }
-
-    /* =========================
-       STATS
-    ========================== */
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-
-      gap: 15px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      padding: 22px;
-
-      background: var(--card);
-
-      border: 1px solid var(--border);
-      border-radius: 18px;
-    }
-
-    .stat-title {
-      color: var(--muted);
-      font-size: 13px;
-
-      margin-bottom: 9px;
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 800;
-    }
-
-    .stat-value.points {
-      color: var(--yellow);
-    }
-
-    /* =========================
-       SECTION
-    ========================== */
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      gap: 15px;
-
-      margin-bottom: 15px;
-    }
-
-    .section-title h2 {
-      font-size: 22px;
-    }
-
-    .section-title span {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .card {
-      background: var(--card);
-
-      border: 1px solid var(--border);
-      border-radius: 20px;
-
-      overflow: hidden;
-    }
-
-    /* =========================
-       TASK
-    ========================== */
-
-    .task-list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .task {
-      padding: 20px;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      gap: 20px;
-
-      background: var(--card);
-
-      border: 1px solid var(--border);
-      border-radius: 18px;
-    }
-
-    .task-left {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-
-      min-width: 0;
-    }
-
-    .task-icon {
-      flex: 0 0 48px;
-
-      width: 48px;
-      height: 48px;
-
-      display: grid;
-      place-items: center;
-
-      border-radius: 14px;
-
-      background: rgba(124,77,255,.15);
-
-      font-size: 22px;
-    }
-
-    .task-info {
-      min-width: 0;
-    }
-
-    .task-info h3 {
-      font-size: 16px;
-      margin-bottom: 5px;
-    }
-
-    .task-info p {
-      color: var(--muted);
-      font-size: 13px;
-
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .task-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .points-badge {
-      color: var(--yellow);
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .task-btn {
-      border: 0;
-
-      padding: 10px 15px;
-      border-radius: 10px;
-
-      background: rgba(124,77,255,.16);
-      color: white;
-
-      font-weight: 700;
-    }
-
-    .task-btn:hover {
-      background: var(--primary);
-    }
-
-    .task-btn.done {
-      background: rgba(49,209,124,.12);
-      color: var(--green);
-      cursor: default;
-    }
-
-    /* =========================
-       RANKING
-    ========================== */
-
-    .ranking-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .ranking-tab {
-      border: 1px solid var(--border);
-
-      background: var(--card);
-
-      color: var(--muted);
-
-      padding: 10px 17px;
-      border-radius: 10px;
-    }
-
-    .ranking-tab.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    .ranking-row {
-      display: grid;
-      grid-template-columns: 55px 1fr 100px 100px;
-
-      align-items: center;
-
-      gap: 10px;
-
-      padding: 17px 20px;
-
-      border-bottom: 1px solid var(--border);
-    }
-
-    .ranking-row:last-child {
-      border-bottom: 0;
-    }
-
-    .rank-number {
-      font-weight: 900;
-      font-size: 18px;
-    }
-
-    .rank-user {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .avatar {
-      width: 38px;
-      height: 38px;
-
-      display: grid;
-      place-items: center;
-
-      border-radius: 50%;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary2)
-        );
-
-      font-weight: 800;
-    }
-
-    .rank-points {
-      color: var(--yellow);
-      font-weight: 800;
-      text-align: right;
-    }
-
-    .rank-reward {
-      color: var(--green);
-      font-weight: 800;
-      text-align: right;
-    }
-
-    /* =========================
-       ACCOUNT
-    ========================== */
-
-    .account-box {
-      padding: 28px;
-    }
-
-    .account-head {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-
-      margin-bottom: 24px;
-    }
-
-    .account-avatar {
-      width: 65px;
-      height: 65px;
-
-      display: grid;
-      place-items: center;
-
-      border-radius: 20px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary2)
-        );
-
-      font-size: 25px;
-      font-weight: 900;
-    }
-
-    .account-head h2 {
-      margin-bottom: 5px;
-    }
-
-    .account-head p {
-      color: var(--muted);
-    }
-
-    .account-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .logout-btn {
-      border: 1px solid rgba(255,95,109,.25);
-
-      background: rgba(255,95,109,.08);
-
-      color: var(--red);
-
-      padding: 11px 17px;
-      border-radius: 10px;
-
-      font-weight: 700;
-    }
-
-    /* =========================
-       EMPTY / LOGIN
-    ========================== */
-
-    .login-card {
-      text-align: center;
-      padding: 55px 25px;
-    }
-
-    .login-card .big-icon {
-      font-size: 50px;
-      margin-bottom: 15px;
-    }
-
-    .login-card h2 {
-      margin-bottom: 8px;
-    }
-
-    .login-card p {
-      color: var(--muted);
-      margin-bottom: 22px;
-    }
-
-    /* =========================
-       MODAL
-    ========================== */
-
-    .modal {
-      position: fixed;
-      inset: 0;
-
-      z-index: 1000;
-
-      display: none;
-      align-items: center;
-      justify-content: center;
-
-      padding: 20px;
-
-      background: rgba(0,0,0,.7);
-      backdrop-filter: blur(8px);
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-box {
-      width: min(450px, 100%);
-
-      position: relative;
-
-      padding: 28px;
-
-      background: #151521;
-
-      border: 1px solid var(--border);
-      border-radius: 22px;
-
-      box-shadow: 0 25px 80px rgba(0,0,0,.5);
-    }
-
-    .modal-close {
-      position: absolute;
-      right: 18px;
-      top: 16px;
-
-      width: 34px;
-      height: 34px;
-
-      border: 0;
-      border-radius: 50%;
-
-      background: rgba(255,255,255,.06);
-      color: white;
-
-      font-size: 20px;
-    }
-
-    .modal-title {
-      font-size: 25px;
-      margin-bottom: 7px;
-    }
-
-    .modal-subtitle {
-      color: var(--muted);
-      font-size: 14px;
-
-      margin-bottom: 22px;
-    }
-
-    .auth-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-
-      gap: 5px;
-
-      padding: 5px;
-
-      border-radius: 12px;
-
-      background: rgba(255,255,255,.04);
-
-      margin-bottom: 20px;
-    }
-
-    .auth-tab {
-      border: 0;
-
-      padding: 11px;
-
-      border-radius: 9px;
-
-      background: transparent;
-      color: var(--muted);
-    }
-
-    .auth-tab.active {
-      background: var(--primary);
-      color: white;
-      font-weight: 700;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-
-      font-size: 13px;
-      font-weight: 700;
-
-      margin-bottom: 7px;
-    }
-
-    .input-wrap {
-      position: relative;
-    }
-
-    .form-group input {
-      width: 100%;
-
-      padding: 13px 14px;
-
-      border-radius: 11px;
-
-      border: 1px solid var(--border);
-
-      outline: none;
-
-      background: rgba(255,255,255,.045);
-      color: white;
-    }
-
-    .form-group input:focus {
-      border-color: var(--primary);
-    }
-
-    .password-toggle {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-
-      transform: translateY(-50%);
-
-      border: 0;
-      background: transparent;
-
-      color: var(--muted);
-
-      padding: 7px;
-    }
-
-    .checkbox-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 9px;
-
-      color: var(--muted);
-
-      font-size: 12px;
-
-      margin: 5px 0 18px;
-    }
-
-    .checkbox-row input {
-      margin-top: 2px;
-    }
-
-    .auth-submit {
-      width: 100%;
-
-      border: 0;
-
-      padding: 13px;
-
-      border-radius: 11px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary2)
-        );
-
-      color: white;
-
-      font-weight: 800;
-    }
-
-    .auth-submit:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
-    .auth-error {
-      display: none;
-
-      padding: 10px 12px;
-
-      border-radius: 10px;
-
-      background: rgba(255,95,109,.1);
-
-      color: #ff8892;
-
-      font-size: 13px;
-
-      margin-bottom: 14px;
-    }
-
-    .auth-error.show {
-      display: block;
-    }
-
-    .auth-footer {
-      text-align: center;
-
-      color: var(--muted);
-
-      font-size: 13px;
-
-      margin-top: 18px;
-    }
-
-    .auth-link {
-      border: 0;
-      background: transparent;
-
-      color: var(--primary2);
-
-      font-weight: 700;
-    }
-
-    /* =========================
-       TOAST
-    ========================== */
-
-    .toast {
-      position: fixed;
-
-      right: 20px;
-      bottom: 20px;
-
-      z-index: 2000;
-
-      min-width: 250px;
-
-      padding: 14px 17px;
-
-      border-radius: 12px;
-
-      background: #20202d;
-      border: 1px solid var(--border);
-
-      box-shadow: 0 15px 40px rgba(0,0,0,.35);
-
-      transform: translateY(100px);
-      opacity: 0;
-
-      transition: .25s;
-    }
-
-    .toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    .toast.success {
-      border-color: rgba(49,209,124,.3);
-    }
-
-    .toast.error {
-      border-color: rgba(255,95,109,.3);
-    }
-
-    /* =========================
-       MOBILE
-    ========================== */
-
-    @media (max-width: 850px) {
-
-      .hero {
-        grid-template-columns: 1fr;
-      }
-
-      nav {
-        display: none;
-      }
-
-      .stats {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-main {
-        padding: 28px;
-      }
-
-      .ranking-row {
-        grid-template-columns: 45px 1fr 80px;
-      }
-
-      .rank-reward {
-        display: none;
-      }
-    }
-
-    @media (max-width: 560px) {
-
-      .container {
-        width: min(100% - 20px, 1120px);
-      }
-
-      main {
-        padding-top: 22px;
-      }
-
-      .header-inner {
-        min-height: 64px;
-      }
-
-      .logo {
-        font-size: 16px;
-      }
-
-      .logo-icon {
-        width: 34px;
-        height: 34px;
-      }
-
-      .login-header {
-        padding: 9px 12px;
-        font-size: 13px;
-      }
-
-      .hero-main {
-        min-height: auto;
-        padding: 25px 20px;
-      }
-
-      .hero-main h1 {
-        font-size: 34px;
-      }
-
-      .main-channel {
-        padding: 22px;
-      }
-
-      .task {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .task-right {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      .task-btn {
-        flex: 1;
-      }
-
-      .ranking-row {
-        grid-template-columns: 38px 1fr 75px;
-        padding: 15px;
-      }
-
-      .rank-user {
-        min-width: 0;
-      }
-
-      .rank-user span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-  </style>
 </head>
 
 <body>
 
-<!-- =========================
-     HEADER
-========================== -->
+<header class="topbar">
+  <div class="logo">Nhiệm Vụ <span>Điểm</span></div>
 
-<header>
-  <div class="container header-inner">
+  <nav class="nav">
+    <button id="nav-home" class="active" onclick="showPage('home')">Trang chủ</button>
+    <button id="nav-tasks" onclick="showPage('tasks')">Nhiệm vụ</button>
+    <button id="nav-ranking" onclick="showPage('ranking')">Xếp hạng</button>
+    <button id="nav-account" onclick="showPage('account')">Tài khoản</button>
+  </nav>
 
-    <a href="#" class="logo" onclick="showPage('home'); return false;">
-      <div class="logo-icon">⭐</div>
-      <span>Nhiệm Vụ Điểm</span>
-    </a>
-
-    <nav>
-      <button class="nav-btn active"
-              data-page="home"
-              onclick="showPage('home')">
-        Trang chủ
-      </button>
-
-      <button class="nav-btn"
-              data-page="tasks"
-              onclick="showPage('tasks')">
-        Nhiệm vụ
-      </button>
-
-      <button class="nav-btn"
-              data-page="ranking"
-              onclick="showPage('ranking')">
-        Xếp hạng
-      </button>
-
-      <button class="nav-btn"
-              data-page="account"
-              onclick="showPage('account')">
-        Tài khoản
-      </button>
-    </nav>
-
-    <button
-      class="login-header"
-      id="headerAuthButton"
-      onclick="openAuth()">
-      Đăng nhập
-    </button>
-
-  </div>
+  <button class="account-btn" id="accountButton" onclick="openAuth()">
+    Đăng nhập
+  </button>
 </header>
 
+<main class="container">
 
-<!-- =========================
-     MAIN
-========================== -->
+  <!-- TRANG CHỦ -->
 
-<main>
+  <section id="page-home" class="page active">
 
-<div class="container">
+```
+<div class="hero">
+  <h1>Hoàn thành nhiệm vụ, tích điểm 🎯</h1>
+  <p>
+    Tham gia các nhiệm vụ TikTok, hoàn thành theo hướng dẫn
+    và tích lũy điểm để tham gia bảng xếp hạng.
+  </p>
 
-
-<!-- =========================
-     HOME
-========================== -->
-
-<section id="page-home" class="page active">
-
-  <div class="hero">
-
-    <div class="hero-main">
-
-      <h1>
-        Khám phá nhiệm vụ.<br>
-        <span>Tích điểm mỗi ngày.</span>
-      </h1>
-
-      <p>
-        Tham gia các nhiệm vụ cộng đồng một cách chủ động,
-        hoàn thành nhiệm vụ và tích điểm để cạnh tranh trên
-        bảng xếp hạng ngày và tuần.
-      </p>
-
-      <div class="hero-buttons">
-
-        <button
-          class="btn-primary"
-          onclick="showPage('tasks')">
-          🎯 Xem nhiệm vụ
-        </button>
-
-        <button
-          class="btn-secondary"
-          onclick="showPage('ranking')">
-          🏆 Xem xếp hạng
-        </button>
-
-      </div>
-
-    </div>
-
-
-    <div class="main-channel">
-
-      <div class="channel-label">
-        ⭐ KÊNH CHÍNH
-      </div>
-
-      <div class="channel-name">
-        @uyn.uyn2229
-      </div>
-
-      <div class="channel-url">
-        TikTok
-      </div>
-
-      <button
-        class="btn-primary"
-        onclick="openMainChannel()">
-        Mở kênh TikTok
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- STATS -->
-
-  <div class="stats">
-
-    <div class="stat-card">
-
-      <div class="stat-title">
-        Điểm của bạn
-      </div>
-
-      <div
-        class="stat-value points"
-        id="homePoints">
-        0
-      </div>
-
-    </div>
-
-
-    <div class="stat-card">
-
-      <div class="stat-title">
-        Đã hoàn thành
-      </div>
-
-      <div
-        class="stat-value"
-        id="homeCompleted">
-        0
-      </div>
-
-    </div>
-
-
-    <div class="stat-card">
-
-      <div class="stat-title">
-        Hoàn thành hôm nay
-      </div>
-
-      <div
-        class="stat-value"
-        id="homeToday">
-        0
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <!-- TASK PREVIEW -->
-
-  <div class="section-title">
-
-    <h2>
-      🎯 Nhiệm vụ đề xuất
-    </h2>
-
-    <span>
-      Cập nhật ngẫu nhiên
-    </span>
-
-  </div>
-
-  <div
-    class="task-list"
-    id="homeTasks">
-  </div>
-
-</section>
-
-
-
-<!-- =========================
-     TASKS
-========================== -->
-
-<section id="page-tasks" class="page">
-
-  <div class="section-title">
-
+  <div class="main-channel">
     <div>
-      <h2>🎯 Nhiệm vụ</h2>
-
-      <span>
-        Chọn nhiệm vụ bạn muốn thực hiện
-      </span>
+      <strong>Kênh chính</strong>
+      <small>@uyn.uyn2229</small>
     </div>
 
-    <button
-      class="btn-secondary"
-      onclick="loadTasks()">
-      🔄 Làm mới
+    <button class="primary" onclick="openMainChannel()">
+      Mở TikTok
     </button>
-
   </div>
+</div>
 
-
-  <div
-    class="task-list"
-    id="tasksList">
+<div class="stats">
+  <div class="card">
+    <div class="stat-title">Điểm hiện tại</div>
+    <div class="stat-value" id="homePoints">0</div>
   </div>
-
-</section>
-
-
-
-<!-- =========================
-     RANKING
-========================== -->
-
-<section id="page-ranking" class="page">
-
-  <div class="section-title">
-
-    <div>
-      <h2>🏆 Bảng xếp hạng</h2>
-
-      <span>
-        Ai tích nhiều điểm nhất?
-      </span>
-    </div>
-
-  </div>
-
-
-  <div class="ranking-tabs">
-
-    <button
-      class="ranking-tab active"
-      id="dayTab"
-      onclick="loadRanking('day')">
-      Hôm nay
-    </button>
-
-    <button
-      class="ranking-tab"
-      id="weekTab"
-      onclick="loadRanking('week')">
-      Tuần này
-    </button>
-
-  </div>
-
 
   <div class="card">
-
-    <div class="ranking-row"
-         style="color:var(--muted); font-size:12px;">
-
-      <div>HẠNG</div>
-
-      <div>NGƯỜI DÙNG</div>
-
-      <div style="text-align:right">
-        ĐIỂM
-      </div>
-
-      <div style="text-align:right">
-        THƯỞNG
-      </div>
-
-    </div>
-
-    <div id="rankingList"></div>
-
+    <div class="stat-title">Đã hoàn thành</div>
+    <div class="stat-value" id="homeCompleted">0</div>
   </div>
 
-</section>
+  <div class="card">
+    <div class="stat-title">Hoàn thành hôm nay</div>
+    <div class="stat-value" id="homeToday">0</div>
+  </div>
+</div>
 
-
-
-<!-- =========================
-     ACCOUNT
-========================== -->
-
-<section id="page-account" class="page">
-
-  <div
-    id="loggedOutAccount"
-    class="card login-card">
-
-    <div class="big-icon">
-      👤
-    </div>
-
-    <h2>
-      Bạn chưa đăng nhập
-    </h2>
-
-    <p>
-      Đăng nhập để xem điểm, lịch sử nhiệm vụ
-      và thông tin tài khoản.
-    </p>
-
-    <button
-      class="btn-primary"
-      onclick="openAuth()">
-      Đăng nhập / Đăng ký
+<div class="card">
+  <div class="section-title">
+    <h2>Nhiệm vụ mới</h2>
+    <button class="secondary" onclick="showPage('tasks')">
+      Xem tất cả
     </button>
-
   </div>
 
+  <div id="homeTasks" class="task-list">
+    <div class="loading">Đang tải nhiệm vụ...</div>
+  </div>
+</div>
+```
 
-  <div
-    id="loggedInAccount"
-    class="card account-box"
-    style="display:none;">
+  </section>
 
-    <div class="account-head">
+  <!-- NHIỆM VỤ -->
 
-      <div
-        class="account-avatar"
-        id="accountAvatar">
-        U
-      </div>
+  <section id="page-tasks" class="page">
 
-      <div>
+```
+<div class="section-title">
+  <div>
+    <h2>Nhiệm vụ</h2>
+    <p style="color:#727b8d;margin-top:6px;">
+      Chọn nhiệm vụ bạn muốn thực hiện.
+    </p>
+  </div>
 
-        <h2 id="accountUsername">
-          Người dùng
-        </h2>
+  <button class="primary" onclick="loadTasks()">
+    Làm mới
+  </button>
+</div>
 
-        <p id="accountEmail">
-          —
+<div class="notice">
+  Bạn tự thực hiện hành động trên TikTok. Website chỉ mở trang TikTok
+  để bạn thao tác và sau đó bạn xác nhận hoàn thành.
+</div>
+
+<div id="tasksList" class="task-list">
+  <div class="loading">Đang tải nhiệm vụ...</div>
+</div>
+```
+
+  </section>
+
+  <!-- XẾP HẠNG -->
+
+  <section id="page-ranking" class="page">
+
+```
+<div class="section-title">
+  <div>
+    <h2>🏆 Xếp hạng</h2>
+    <p style="color:#727b8d;margin-top:6px;">
+      Những người có điểm cao nhất.
+    </p>
+  </div>
+
+  <button class="secondary" onclick="loadLeaderboard()">
+    Cập nhật
+  </button>
+</div>
+
+<div class="tabs">
+  <button id="dayTab" class="active" onclick="changeRanking('day')">
+    Hôm nay
+  </button>
+
+  <button id="weekTab" onclick="changeRanking('week')">
+    Tuần này
+  </button>
+</div>
+
+<div class="leaderboard">
+
+  <div class="rank-row" style="background:#f7f8fb;font-weight:700;">
+    <div>Hạng</div>
+    <div>Người dùng</div>
+    <div style="text-align:right;">Điểm</div>
+  </div>
+
+  <div id="leaderboardList">
+    <div class="loading">Đang tải bảng xếp hạng...</div>
+  </div>
+
+</div>
+
+<div class="reward">
+  <strong>🎁 Điểm thưởng xếp hạng</strong>
+
+  <div class="reward-line">
+    <span>🥇 Hạng 1</span>
+    <b id="reward1">50 điểm</b>
+  </div>
+
+  <div class="reward-line">
+    <span>🥈 Hạng 2</span>
+    <b id="reward2">30 điểm</b>
+  </div>
+
+  <div class="reward-line">
+    <span>🥉 Hạng 3</span>
+    <b id="reward3">20 điểm</b>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- TÀI KHOẢN -->
+
+  <section id="page-account" class="page">
+
+```
+<div class="section-title">
+  <h2>Tài khoản</h2>
+</div>
+
+<div id="accountContent"></div>
+```
+
+  </section>
+
+</main>
+
+<!-- MODAL ĐĂNG NHẬP -->
+
+<div id="authModal" class="modal">
+
+  <div class="modal-box">
+
+```
+<button class="close" onclick="closeAuth()">×</button>
+
+<div id="loginForm">
+
+  <h2>Đăng nhập</h2>
+
+  <div class="form-group">
+    <label>Tài khoản hoặc email</label>
+    <input id="loginIdentifier" type="text" autocomplete="username">
+  </div>
+
+  <div class="form-group">
+    <label>Mật khẩu</label>
+
+    <div class="password-wrap">
+      <input id="loginPassword" type="password" autocomplete="current-password">
+      <button class="show-password" onclick="togglePassword('loginPassword')">
+        Hiện
+      </button>
+    </div>
+  </div>
+
+  <button class="primary" style="width:100%;" onclick="login()">
+    Đăng nhập
+  </button>
+
+  <div class="switch">
+    Chưa có tài khoản?
+    <button onclick="showRegister()">Đăng ký</button>
+  </div>
+
+</div>
+
+
+<div id="registerForm" style="display:none;">
+
+  <h2>Tạo tài khoản</h2>
+
+  <div class="form-group">
+    <label>Tên người dùng</label>
+    <input id="registerUsername" type="text" maxlength="24">
+  </div>
+
+  <div class="form-group">
+    <label>Email</label>
+    <input id="registerEmail" type="email">
+  </div>
+
+  <div class="form-group">
+    <label>Mật khẩu</label>
+
+    <div class="password-wrap">
+      <input id="registerPassword" type="password">
+      <button class="show-password" onclick="togglePassword('registerPassword')">
+        Hiện
+      </button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Nhập lại mật khẩu</label>
+    <input id="registerConfirm" type="password">
+  </div>
+
+  <label class="check">
+    <input id="agree" type="checkbox">
+    <span>Tôi đồng ý sử dụng website đúng mục đích và tự thực hiện nhiệm vụ.</span>
+  </label>
+
+  <button class="primary" style="width:100%;" onclick="register()">
+    Tạo tài khoản
+  </button>
+
+  <div class="switch">
+    Đã có tài khoản?
+    <button onclick="showLogin()">Đăng nhập</button>
+  </div>
+
+</div>
+```
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API = "/api";
+
+const MAIN_CHANNEL = "https://www.tiktok.com/@uyn.uyn2229";
+
+let currentUser = null;
+let currentRanking = "day";
+
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+function showToast(message){
+  const toast = document.getElementById("toast");
+
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  },3000);
+}
+
+
+async function apiFetch(url, options={}){
+  const response = await fetch(API + url,{
+    credentials:"include",
+    headers:{
+      "Content-Type":"application/json",
+      ...(options.headers || {})
+    },
+    ...options
+  });
+
+  let data = {};
+
+  try{
+    data = await response.json();
+  }catch(e){}
+
+  if(!response.ok){
+    throw new Error(data.error || "Có lỗi xảy ra.");
+  }
+
+  return data;
+}
+
+
+function showPage(page){
+
+  document.querySelectorAll(".page").forEach(el=>{
+    el.classList.remove("active");
+  });
+
+  document.getElementById("page-" + page).classList.add("active");
+
+  document.querySelectorAll(".nav button").forEach(el=>{
+    el.classList.remove("active");
+  });
+
+  const nav = document.getElementById("nav-" + page);
+
+  if(nav){
+    nav.classList.add("active");
+  }
+
+  if(page === "tasks"){
+    loadTasks();
+  }
+
+  if(page === "ranking"){
+    loadLeaderboard();
+  }
+
+  if(page === "account"){
+    renderAccount();
+  }
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+
+function openMainChannel(){
+  window.open(MAIN_CHANNEL,"_blank","noopener,noreferrer");
+}
+
+
+function openAuth(){
+  document.getElementById("authModal").classList.add("show");
+  showLogin();
+}
+
+
+function closeAuth(){
+  document.getElementById("authModal").classList.remove("show");
+}
+
+
+function showLogin(){
+  document.getElementById("loginForm").style.display="block";
+  document.getElementById("registerForm").style.display="none";
+}
+
+
+function showRegister(){
+  document.getElementById("loginForm").style.display="none";
+  document.getElementById("registerForm").style.display="block";
+}
+
+
+function togglePassword(id){
+
+  const input = document.getElementById(id);
+
+  input.type =
+    input.type === "password"
+      ? "text"
+      : "password";
+}
+
+
+async function login(){
+
+  const identifier =
+    document.getElementById("loginIdentifier").value.trim();
+
+  const password =
+    document.getElementById("loginPassword").value;
+
+  if(!identifier || !password){
+    showToast("Vui lòng nhập đầy đủ thông tin.");
+    return;
+  }
+
+  try{
+
+    await apiFetch("/login",{
+      method:"POST",
+      body:JSON.stringify({
+        identifier,
+        password
+      })
+    });
+
+    showToast("Đăng nhập thành công!");
+
+    closeAuth();
+
+    await loadUser();
+
+  }catch(error){
+
+    showToast(error.message);
+
+  }
+}
+
+
+async function register(){
+
+  const username =
+    document.getElementById("registerUsername").value.trim();
+
+  const email =
+    document.getElementById("registerEmail").value.trim();
+
+  const password =
+    document.getElementById("registerPassword").value;
+
+  const confirm =
+    document.getElementById("registerConfirm").value;
+
+  const agree =
+    document.getElementById("agree").checked;
+
+
+  if(!username || !email || !password || !confirm){
+
+    showToast("Vui lòng nhập đầy đủ thông tin.");
+
+    return;
+  }
+
+
+  if(!/^[A-Za-z0-9_.-]{3,24}$/.test(username)){
+
+    showToast("Tên người dùng 3-24 ký tự, chỉ dùng chữ, số, _, . hoặc -.");
+
+    return;
+  }
+
+
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+
+    showToast("Email không hợp lệ.");
+
+    return;
+  }
+
+
+  if(password.length < 8){
+
+    showToast("Mật khẩu phải có ít nhất 8 ký tự.");
+
+    return;
+  }
+
+
+  if(password !== confirm){
+
+    showToast("Mật khẩu nhập lại không khớp.");
+
+    return;
+  }
+
+
+  if(!agree){
+
+    showToast("Bạn cần đồng ý điều khoản.");
+
+    return;
+  }
+
+
+  try{
+
+    await apiFetch("/register",{
+      method:"POST",
+      body:JSON.stringify({
+        username,
+        email,
+        password
+      })
+    });
+
+    showToast("Đăng ký thành công!");
+
+    closeAuth();
+
+    await loadUser();
+
+  }catch(error){
+
+    showToast(error.message);
+
+  }
+}
+
+
+async function logout(){
+
+  try{
+
+    await apiFetch("/logout",{
+      method:"POST"
+    });
+
+    currentUser = null;
+
+    showToast("Đã đăng xuất.");
+
+    renderHeader();
+    renderAccount();
+
+    showPage("home");
+
+  }catch(error){
+
+    showToast(error.message);
+
+  }
+}
+
+
+async function loadUser(){
+
+  try{
+
+    const data = await apiFetch("/me");
+
+    currentUser = data.user || null;
+
+  }catch(error){
+
+    currentUser = null;
+
+  }
+
+  renderHeader();
+  renderAccount();
+  loadDashboard();
+}
+
+
+function renderHeader(){
+
+  const button =
+    document.getElementById("accountButton");
+
+  if(currentUser){
+
+    button.textContent =
+      currentUser.username || "Tài khoản";
+
+  }else{
+
+    button.textContent = "Đăng nhập";
+
+  }
+}
+
+
+async function loadDashboard(){
+
+  if(!currentUser){
+
+    document.getElementById("homePoints").textContent="0";
+    document.getElementById("homeCompleted").textContent="0";
+    document.getElementById("homeToday").textContent="0";
+
+    loadTasks();
+
+    return;
+  }
+
+
+  try{
+
+    const data =
+      await apiFetch("/dashboard");
+
+    const d =
+      data.dashboard || data;
+
+    document.getElementById("homePoints").textContent =
+      Number(d.points || 0).toLocaleString("vi-VN");
+
+    document.getElementById("homeCompleted").textContent =
+      Number(d.completed || 0).toLocaleString("vi-VN");
+
+    document.getElementById("homeToday").textContent =
+      Number(d.today || 0).toLocaleString("vi-VN");
+
+  }catch(error){
+
+    console.error(error);
+
+  }
+
+  loadTasks();
+}
+
+
+function taskHtml(task){
+
+  const type =
+    task.kind === "channel"
+      ? "KÊNH"
+      : "VIDEO";
+
+  return `
+    <div class="task">
+
+      <div class="task-left">
+
+        <div class="task-badge">${type}</div>
+
+        <h3>${escapeHtml(task.title || "Nhiệm vụ TikTok")}</h3>
+
+        <p>
+          ${escapeHtml(task.description || "Mở TikTok và hoàn thành nhiệm vụ.")}
         </p>
 
       </div>
 
-    </div>
-
-
-    <div class="stats">
-
-      <div class="stat-card">
-
-        <div class="stat-title">
-          Tổng điểm
+      <div>
+        <div class="points">
+          +${Number(task.points || 0)} điểm
         </div>
 
-        <div
-          class="stat-value points"
-          id="accountPoints">
-          0
-        </div>
-
-      </div>
-
-
-      <div class="stat-card">
-
-        <div class="stat-title">
-          Nhiệm vụ đã làm
-        </div>
-
-        <div
-          class="stat-value"
-          id="accountCompleted">
-          0
-        </div>
-
-      </div>
-
-
-      <div class="stat-card">
-
-        <div class="stat-title">
-          Hôm nay
-        </div>
-
-        <div
-          class="stat-value"
-          id="accountToday">
-          0
-        </div>
-
+        <button
+          class="primary"
+          style="margin-top:10px;"
+          onclick="startTask(${Number(task.id)})"
+        >
+          Thực hiện
+        </button>
       </div>
 
     </div>
+  `;
+}
 
 
-    <div class="account-actions">
+async function loadTasks(){
 
-      <button
-        class="btn-primary"
-        onclick="showPage('tasks')">
-        🎯 Làm nhiệm vụ
-      </button>
+  const home =
+    document.getElementById("homeTasks");
 
-      <button
-        class="logout-btn"
-        onclick="logout()">
-        Đăng xuất
-      </button>
+  const list =
+    document.getElementById("tasksList");
 
-    </div>
 
-  </div>
-
-</section>
-
-
-</div>
-
-</main>
-
-
-
-<!-- =========================
-     AUTH MODAL
-========================== -->
-
-<div
-  class="modal"
-  id="authModal">
-
-  <div class="modal-box">
-
-    <button
-      class="modal-close"
-      onclick="closeAuth()">
-      ×
-    </button>
-
-
-    <h2
-      class="modal-title"
-      id="authTitle">
-      Chào mừng bạn
-    </h2>
-
-    <p
-      class="modal-subtitle"
-      id="authSubtitle">
-      Đăng nhập để tiếp tục
-    </p>
-
-
-    <div class="auth-tabs">
-
-      <button
-        class="auth-tab active"
-        id="loginTab"
-        onclick="setAuthMode('login')">
-        Đăng nhập
-      </button>
-
-      <button
-        class="auth-tab"
-        id="registerTab"
-        onclick="setAuthMode('register')">
-        Đăng ký
-      </button>
-
-    </div>
-
-
-    <div
-      class="auth-error"
-      id="authError">
-    </div>
-
-
-    <!-- LOGIN -->
-
-    <form
-      id="loginForm"
-      onsubmit="handleLogin(event)">
-
-      <div class="form-group">
-
-        <label>
-          Tên đăng nhập hoặc email
-        </label>
-
-        <input
-          id="loginIdentity"
-          type="text"
-          placeholder="Nhập tên hoặc email"
-          autocomplete="username"
-          required>
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>
-          Mật khẩu
-        </label>
-
-        <div class="input-wrap">
-
-          <input
-            id="loginPassword"
-            type="password"
-            placeholder="Nhập mật khẩu"
-            autocomplete="current-password"
-            required>
-
-          <button
-            type="button"
-            class="password-toggle"
-            onclick="togglePassword('loginPassword', this)">
-            👁
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <button
-        type="submit"
-        class="auth-submit"
-        id="loginSubmit">
-        Đăng nhập
-      </button>
-
-    </form>
-
-
-    <!-- REGISTER -->
-
-    <form
-      id="registerForm"
-      style="display:none;"
-      onsubmit="handleRegister(event)">
-
-      <div class="form-group">
-
-        <label>
-          Tên đăng nhập
-        </label>
-
-        <input
-          id="registerUsername"
-          type="text"
-          placeholder="Ví dụ: trung123"
-          minlength="3"
-          maxlength="24"
-          autocomplete="username"
-          required>
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>
-          Email
-        </label>
-
-        <input
-          id="registerEmail"
-          type="email"
-          placeholder="you@example.com"
-          autocomplete="email"
-          required>
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>
-          Mật khẩu
-        </label>
-
-        <div class="input-wrap">
-
-          <input
-            id="registerPassword"
-            type="password"
-            placeholder="Tối thiểu 8 ký tự"
-            minlength="8"
-            maxlength="72"
-            autocomplete="new-password"
-            required>
-
-          <button
-            type="button"
-            class="password-toggle"
-            onclick="togglePassword('registerPassword', this)">
-            👁
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>
-          Nhập lại mật khẩu
-        </label>
-
-        <div class="input-wrap">
-
-          <input
-            id="registerConfirm"
-            type="password"
-            placeholder="Nhập lại mật khẩu"
-            minlength="8"
-            maxlength="72"
-            autocomplete="new-password"
-            required>
-
-          <button
-            type="button"
-            class="password-toggle"
-            onclick="togglePassword('registerConfirm', this)">
-            👁
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <label class="checkbox-row">
-
-        <input
-          id="registerAgree"
-          type="checkbox"
-          required>
-
-        <span>
-          Tôi đồng ý sử dụng hệ thống đúng mục đích
-          và tự chịu trách nhiệm với các hoạt động
-          mình thực hiện.
-        </span>
-
-      </label>
-
-
-      <button
-        type="submit"
-        class="auth-submit"
-        id="registerSubmit">
-        Tạo tài khoản
-      </button>
-
-    </form>
-
-
-    <div class="auth-footer">
-
-      <span id="authFooterText">
-        Chưa có tài khoản?
-      </span>
-
-      <button
-        class="auth-link"
-        id="authFooterButton"
-        onclick="setAuthMode('register')">
-        Đăng ký ngay
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-
-<!-- =========================
-     TOAST
-========================== -->
-
-<div
-  class="toast"
-  id="toast">
-</div>
-
-
-
-<script>
-
-  /* ======================================
-     CONFIG
-  ====================================== */
-
-  const MAIN_CHANNEL =
-    "https://www.tiktok.com/@uyn.uyn2229";
-
-
-  /*
-    API của server.js.
-    Khi index.html và server.js cùng Render
-    thì giữ nguyên /api/...
-  */
-
-  const API = "/api";
-
-
-  /* ======================================
-     STATE
-  ====================================== */
-
-  let currentUser = null;
-
-  let currentTasks = [];
-
-  let authMode = "login";
-
-  let rankingPeriod = "day";
-
-
-  /* ======================================
-     BASIC HELPERS
-  ====================================== */
-
-  function escapeHtml(value) {
-
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-
+  if(list){
+    list.innerHTML =
+      '<div class="loading">Đang tải nhiệm vụ...</div>';
   }
 
 
-  function showToast(message, type = "success") {
+  try{
 
-    const toast =
-      document.getElementById("toast");
+    const data =
+      await apiFetch("/tasks/random");
 
-    toast.textContent = message;
+    const tasks =
+      Array.isArray(data)
+        ? data
+        : (data.tasks || []);
 
-    toast.className =
-      "toast show " + type;
 
-    clearTimeout(window.toastTimer);
+    if(!tasks.length){
 
-    window.toastTimer =
-      setTimeout(() => {
+      const html =
+        '<div class="empty">Hiện chưa có nhiệm vụ.</div>';
 
-        toast.classList.remove("show");
-
-      }, 2800);
-
-  }
-
-
-  async function apiFetch(url, options = {}) {
-
-    const response =
-      await fetch(API + url, {
-
-        credentials: "include",
-
-        headers: {
-          "Content-Type": "application/json",
-          ...(options.headers || {})
-        },
-
-        ...options
-
-      });
-
-
-    let data = {};
-
-    try {
-      data = await response.json();
-    } catch (_) {}
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        data.message ||
-        "Có lỗi xảy ra."
-      );
-
-    }
-
-
-    return data;
-
-  }
-
-
-  /* ======================================
-     NAVIGATION
-  ====================================== */
-
-  function showPage(page) {
-
-    document
-      .querySelectorAll(".page")
-      .forEach(el => {
-
-        el.classList.remove("active");
-
-      });
-
-
-    const target =
-      document.getElementById(
-        "page-" + page
-      );
-
-
-    if (target) {
-
-      target.classList.add("active");
-
-    }
-
-
-    document
-      .querySelectorAll(".nav-btn")
-      .forEach(btn => {
-
-        btn.classList.toggle(
-          "active",
-          btn.dataset.page === page
-        );
-
-      });
-
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-
-
-    if (page === "tasks") {
-
-      loadTasks();
-
-    }
-
-
-    if (page === "ranking") {
-
-      loadRanking(rankingPeriod);
-
-    }
-
-
-    if (page === "account") {
-
-      updateAccountPage();
-
-    }
-
-  }
-
-
-  /* ======================================
-     MAIN CHANNEL
-  ====================================== */
-
-  function openMainChannel() {
-
-    window.open(
-      MAIN_CHANNEL,
-      "_blank",
-      "noopener,noreferrer"
-    );
-
-  }
-
-
-  /* ======================================
-     AUTH MODAL
-  ====================================== */
-
-  function openAuth(mode = "login") {
-
-    setAuthMode(mode);
-
-    document
-      .getElementById("authModal")
-      .classList.add("show");
-
-  }
-
-
-  function closeAuth() {
-
-    document
-      .getElementById("authModal")
-      .classList.remove("show");
-
-    clearAuthError();
-
-  }
-
-
-  function setAuthMode(mode) {
-
-    authMode = mode;
-
-    const login =
-      mode === "login";
-
-
-    document
-      .getElementById("loginForm")
-      .style.display =
-      login ? "block" : "none";
-
-
-    document
-      .getElementById("registerForm")
-      .style.display =
-      login ? "none" : "block";
-
-
-    document
-      .getElementById("loginTab")
-      .classList.toggle(
-        "active",
-        login
-      );
-
-
-    document
-      .getElementById("registerTab")
-      .classList.toggle(
-        "active",
-        !login
-      );
-
-
-    document
-      .getElementById("authTitle")
-      .textContent =
-      login
-        ? "Chào mừng bạn"
-        : "Tạo tài khoản";
-
-
-    document
-      .getElementById("authSubtitle")
-      .textContent =
-      login
-        ? "Đăng nhập để tiếp tục"
-        : "Tạo tài khoản để bắt đầu tích điểm";
-
-
-    document
-      .getElementById("authFooterText")
-      .textContent =
-      login
-        ? "Chưa có tài khoản?"
-        : "Đã có tài khoản?";
-
-
-    document
-      .getElementById("authFooterButton")
-      .textContent =
-      login
-        ? "Đăng ký ngay"
-        : "Đăng nhập";
-
-
-    document
-      .getElementById("authFooterButton")
-      .onclick =
-      () => setAuthMode(
-        login ? "register" : "login"
-      );
-
-
-    clearAuthError();
-
-  }
-
-
-  function showAuthError(message) {
-
-    const el =
-      document.getElementById("authError");
-
-    el.textContent = message;
-
-    el.classList.add("show");
-
-  }
-
-
-  function clearAuthError() {
-
-    const el =
-      document.getElementById("authError");
-
-    el.textContent = "";
-
-    el.classList.remove("show");
-
-  }
-
-
-  function togglePassword(id, button) {
-
-    const input =
-      document.getElementById(id);
-
-    if (input.type === "password") {
-
-      input.type = "text";
-      button.textContent = "🙈";
-
-    } else {
-
-      input.type = "password";
-      button.textContent = "👁";
-
-    }
-
-  }
-
-
-  /* ======================================
-     LOGIN
-  ====================================== */
-
-  async function handleLogin(event) {
-
-    event.preventDefault();
-
-    clearAuthError();
-
-
-    const identity =
-      document
-        .getElementById("loginIdentity")
-        .value
-        .trim();
-
-
-    const password =
-      document
-        .getElementById("loginPassword")
-        .value;
-
-
-    if (!identity || !password) {
-
-      showAuthError(
-        "Vui lòng nhập đầy đủ thông tin."
-      );
+      if(list) list.innerHTML = html;
+      if(home) home.innerHTML = html;
 
       return;
-
     }
 
 
-    const button =
-      document.getElementById(
-        "loginSubmit"
-      );
+    const fullHtml =
+      tasks.map(taskHtml).join("");
 
-
-    button.disabled = true;
-    button.textContent = "Đang đăng nhập...";
-
-
-    try {
-
-      const data =
-        await apiFetch(
-          "/login",
-          {
-            method: "POST",
-
-            body: JSON.stringify({
-              identity,
-              password
-            })
-          }
-        );
-
-
-      currentUser =
-        data.user || data;
-
-
-      closeAuth();
-
-      await refreshDashboard();
-
-      showToast(
-        "Đăng nhập thành công! 🎉"
-      );
-
-
-    } catch (error) {
-
-      showAuthError(
-        error.message
-      );
-
-    } finally {
-
-      button.disabled = false;
-      button.textContent = "Đăng nhập";
-
-    }
-
-  }
-
-
-  /* ======================================
-     REGISTER
-  ====================================== */
-
-  async function handleRegister(event) {
-
-    event.preventDefault();
-
-    clearAuthError();
-
-
-    const username =
-      document
-        .getElementById("registerUsername")
-        .value
-        .trim();
-
-
-    const email =
-      document
-        .getElementById("registerEmail")
-        .value
-        .trim();
-
-
-    const password =
-      document
-        .getElementById("registerPassword")
-        .value;
-
-
-    const confirm =
-      document
-        .getElementById("registerConfirm")
-        .value;
-
-
-    const agree =
-      document
-        .getElementById("registerAgree")
-        .checked;
-
-
-    if (!/^[A-Za-z0-9_.-]{3,24}$/.test(username)) {
-
-      showAuthError(
-        "Tên đăng nhập 3–24 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới hoặc gạch ngang."
-      );
-
-      return;
-
+    if(list){
+      list.innerHTML = fullHtml;
     }
 
 
-    if (password.length < 8) {
-
-      showAuthError(
-        "Mật khẩu phải có ít nhất 8 ký tự."
-      );
-
-      return;
-
-    }
-
-
-    if (password !== confirm) {
-
-      showAuthError(
-        "Mật khẩu nhập lại không khớp."
-      );
-
-      return;
-
-    }
-
-
-    if (!agree) {
-
-      showAuthError(
-        "Bạn cần đồng ý với điều khoản sử dụng."
-      );
-
-      return;
-
-    }
-
-
-    const button =
-      document.getElementById(
-        "registerSubmit"
-      );
-
-
-    button.disabled = true;
-    button.textContent = "Đang tạo tài khoản...";
-
-
-    try {
-
-      const data =
-        await apiFetch(
-          "/register",
-          {
-            method: "POST",
-
-            body: JSON.stringify({
-              username,
-              email,
-              password
-            })
-          }
-        );
-
-
-      currentUser =
-        data.user || data;
-
-
-      closeAuth();
-
-      await refreshDashboard();
-
-      showToast(
-        "Tạo tài khoản thành công! 🎉"
-      );
-
-
-    } catch (error) {
-
-      showAuthError(
-        error.message
-      );
-
-    } finally {
-
-      button.disabled = false;
-      button.textContent = "Tạo tài khoản";
-
-    }
-
-  }
-
-
-  /* ======================================
-     LOGOUT
-  ====================================== */
-
-  async function logout() {
-
-    try {
-
-      await apiFetch(
-        "/logout",
-        {
-          method: "POST"
-        }
-      );
-
-    } catch (_) {}
-
-
-    currentUser = null;
-
-    updateUserUI();
-
-    showPage("home");
-
-    showToast(
-      "Đã đăng xuất."
-    );
-
-  }
-
-
-  /* ======================================
-     CHECK SESSION
-  ====================================== */
-
-  async function checkSession() {
-
-    try {
-
-      const data =
-        await apiFetch("/me");
-
-
-      if (data && data.user) {
-
-        currentUser =
-          data.user;
-
-      } else {
-
-        currentUser = null;
-
-      }
-
-    } catch (_) {
-
-      currentUser = null;
-
-    }
-
-
-    updateUserUI();
-
-  }
-
-
-  /* ======================================
-     DASHBOARD
-  ====================================== */
-
-  async function refreshDashboard() {
-
-    updateUserUI();
-
-
-    if (!currentUser) {
-
-      return;
-
-    }
-
-
-    try {
-
-      const data =
-        await apiFetch(
-          "/dashboard"
-        );
-
-
-      const user =
-        data.user || currentUser;
-
-
-      currentUser =
-        user;
-
-
-      updateStats(data);
-
-      updateAccountPage();
-
-    } catch (error) {
-
-      console.warn(
-        "Dashboard:",
-        error.message
-      );
-
-    }
-
-
-    loadTasks();
-
-  }
-
-
-  function updateStats(data = {}) {
-
-    const user =
-      data.user ||
-      currentUser ||
-      {};
-
-
-    const points =
-      Number(
-        data.points ??
-        user.points ??
-        0
-      );
-
-
-    const completed =
-      Number(
-        data.completed ??
-        user.completed ??
-        0
-      );
-
-
-    const today =
-      Number(
-        data.today ??
-        user.today ??
-        0
-      );
-
-
-    document
-      .getElementById("homePoints")
-      .textContent =
-      points;
-
-
-    document
-      .getElementById("homeCompleted")
-      .textContent =
-      completed;
-
-
-    document
-      .getElementById("homeToday")
-      .textContent =
-      today;
-
-
-    document
-      .getElementById("accountPoints")
-      .textContent =
-      points;
-
-
-    document
-      .getElementById("accountCompleted")
-      .textContent =
-      completed;
-
-
-    document
-      .getElementById("accountToday")
-      .textContent =
-      today;
-
-  }
-
-
-  /* ======================================
-     USER UI
-  ====================================== */
-
-  function updateUserUI() {
-
-    const headerButton =
-      document.getElementById(
-        "headerAuthButton"
-      );
-
-
-    if (currentUser) {
-
-      const username =
-        currentUser.username ||
-        "Tài khoản";
-
-
-      headerButton.textContent =
-        username;
-
-
-      document
-        .getElementById(
-          "loggedOutAccount"
-        )
-        .style.display =
-        "none";
-
-
-      document
-        .getElementById(
-          "loggedInAccount"
-        )
-        .style.display =
-        "block";
-
-
-      document
-        .getElementById(
-          "accountUsername"
-        )
-        .textContent =
-        username;
-
-
-      document
-        .getElementById(
-          "accountEmail"
-        )
-        .textContent =
-        currentUser.email || "—";
-
-
-      document
-        .getElementById(
-          "accountAvatar"
-        )
-        .textContent =
-        username
-          .charAt(0)
-          .toUpperCase();
-
-
-    } else {
-
-      headerButton.textContent =
-        "Đăng nhập";
-
-
-      document
-        .getElementById(
-          "loggedOutAccount"
-        )
-        .style.display =
-        "block";
-
-
-      document
-        .getElementById(
-          "loggedInAccount"
-        )
-        .style.display =
-        "none";
-
-
-      updateStats({
-        points: 0,
-        completed: 0,
-        today: 0
-      });
-
-    }
-
-  }
-
-
-  function updateAccountPage() {
-
-    updateUserUI();
-
-  }
-
-
-  /* ======================================
-     TASKS
-  ====================================== */
-
-  function taskTemplate(task) {
-
-    const id =
-      task.id;
-
-
-    const title =
-      escapeHtml(
-        task.title ||
-        "Nhiệm vụ TikTok"
-      );
-
-
-    const description =
-      escapeHtml(
-        task.description ||
-        task.channel ||
-        "Thực hiện nhiệm vụ theo hướng dẫn."
-      );
-
-
-    const points =
-      Number(
-        task.points || 10
-      );
-
-
-    const done =
-      Boolean(
-        task.completed
-      );
-
-
-    return `
-
-      <div class="task">
-
-        <div class="task-left">
-
-          <div class="task-icon">
-            🎯
-          </div>
-
-          <div class="task-info">
-
-            <h3>
-              ${title}
-            </h3>
-
-            <p>
-              ${description}
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="task-right">
-
-          <div class="points-badge">
-            +${points} điểm
-          </div>
-
-          <button
-            class="task-btn ${done ? "done" : ""}"
-            ${done ? "disabled" : ""}
-            onclick="completeTask(${Number(id)})">
-
-            ${done
-              ? "✓ Đã làm"
-              : "Mở nhiệm vụ"}
-
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }
-
-
-  async function loadTasks() {
-
-    const containers = [
-      document.getElementById("tasksList"),
-      document.getElementById("homeTasks")
-    ];
-
-
-    containers.forEach(el => {
-
-      if (el) {
-
-        el.innerHTML = `
-          <div class="card login-card">
-            <div class="big-icon">⏳</div>
-            <p>Đang tải nhiệm vụ...</p>
-          </div>
-        `;
-
-      }
-
-    });
-
-
-    try {
-
-      const data =
-        await apiFetch(
-          "/tasks/random"
-        );
-
-
-      currentTasks =
-        data.tasks ||
-        data ||
-        [];
-
-
-      renderTasks();
-
-    } catch (error) {
-
-      containers.forEach(el => {
-
-        if (el) {
-
-          el.innerHTML = `
-            <div class="card login-card">
-              <div class="big-icon">⚠️</div>
-              <h2>Không tải được nhiệm vụ</h2>
-              <p>
-                ${escapeHtml(error.message)}
-              </p>
-              <button
-                class="btn-primary"
-                onclick="loadTasks()">
-                Thử lại
-              </button>
-            </div>
-          `;
-
-        }
-
-      });
-
-    }
-
-  }
-
-
-  function renderTasks() {
-
-    if (!Array.isArray(currentTasks)) {
-
-      currentTasks = [];
-
-    }
-
-
-    const html =
-      currentTasks.length
-
-        ? currentTasks
-            .map(taskTemplate)
-            .join("")
-
-        : `
-
-          <div class="card login-card">
-
-            <div class="big-icon">
-              🎉
-            </div>
-
-            <h2>
-              Chưa có nhiệm vụ
-            </h2>
-
-            <p>
-              Hãy quay lại sau để xem nhiệm vụ mới.
-            </p>
-
-          </div>
-
-        `;
-
-
-    const taskList =
-      document.getElementById(
-        "tasksList"
-      );
-
-
-    const homeList =
-      document.getElementById(
-        "homeTasks"
-      );
-
-
-    if (taskList) {
-
-      taskList.innerHTML =
-        html;
-
-    }
-
-
-    if (homeList) {
-
-      homeList.innerHTML =
-        currentTasks
-          .slice(0, 4)
-          .map(taskTemplate)
+    if(home){
+
+      home.innerHTML =
+        tasks.slice(0,3)
+          .map(taskHtml)
           .join("");
 
     }
 
+  }catch(error){
+
+    const html =
+      `<div class="empty">${escapeHtml(error.message)}</div>`;
+
+    if(list) list.innerHTML = html;
+    if(home) home.innerHTML = html;
+
+  }
+}
+
+
+async function startTask(taskId){
+
+  if(!currentUser){
+
+    showToast("Bạn cần đăng nhập trước.");
+
+    openAuth();
+
+    return;
   }
 
 
-  /* ======================================
-     COMPLETE TASK
-  ====================================== */
+  try{
 
-  async function completeTask(taskId) {
+    const data =
+      await apiFetch("/tasks/random");
 
-    if (!currentUser) {
-
-      openAuth("login");
-
-      showToast(
-        "Bạn cần đăng nhập trước.",
-        "error"
-      );
-
-      return;
-
-    }
-
+    const tasks =
+      Array.isArray(data)
+        ? data
+        : (data.tasks || []);
 
     const task =
-      currentTasks.find(
-        item =>
-          Number(item.id) ===
-          Number(taskId)
-      );
+      tasks.find(x => Number(x.id) === Number(taskId));
 
 
-    if (!task) {
+    if(!task){
+
+      showToast("Không tìm thấy nhiệm vụ.");
 
       return;
-
     }
-
-
-    /*
-      Mở TikTok trước.
-      Người dùng tự thực hiện hành động.
-    */
-
-    const url =
-      task.url ||
-      task.link ||
-      MAIN_CHANNEL;
 
 
     window.open(
-      url,
+      task.url,
       "_blank",
       "noopener,noreferrer"
     );
 
 
-    /*
-      Xác nhận hoàn thành.
-      Không tự động follow/like/comment.
-    */
+    setTimeout(async ()=>{
 
-    const confirmed =
-      window.confirm(
-        "Bạn đã tự hoàn thành nhiệm vụ này chưa?"
-      );
-
-
-    if (!confirmed) {
-
-      return;
-
-    }
-
-
-    try {
-
-      await apiFetch(
-        "/tasks/complete",
-        {
-          method: "POST",
-
-          body: JSON.stringify({
-            taskId: Number(taskId)
-          })
-        }
-      );
-
-
-      task.completed = true;
-
-
-      renderTasks();
-
-      await refreshDashboard();
-
-
-      showToast(
-        `Hoàn thành nhiệm vụ! +${Number(task.points || 0)} điểm 🎉`
-      );
-
-
-    } catch (error) {
-
-      showToast(
-        error.message,
-        "error"
-      );
-
-    }
-
-  }
-
-
-  /* ======================================
-     RANKING
-  ====================================== */
-
-  async function loadRanking(period = "day") {
-
-    rankingPeriod =
-      period;
-
-
-    const dayTab =
-      document.getElementById(
-        "dayTab"
-      );
-
-
-    const weekTab =
-      document.getElementById(
-        "weekTab"
-      );
-
-
-    dayTab.classList.toggle(
-      "active",
-      period === "day"
-    );
-
-
-    weekTab.classList.toggle(
-      "active",
-      period === "week"
-    );
-
-
-    const list =
-      document.getElementById(
-        "rankingList"
-      );
-
-
-    list.innerHTML = `
-
-      <div class="login-card">
-
-        <div class="big-icon">
-          ⏳
-        </div>
-
-        <p>
-          Đang tải bảng xếp hạng...
-        </p>
-
-      </div>
-
-    `;
-
-
-    try {
-
-      const data =
-        await apiFetch(
-          "/leaderboard?period=" +
-          encodeURIComponent(period)
+      const confirmed =
+        confirm(
+          "Bạn đã hoàn thành nhiệm vụ trên TikTok chưa?\n\n" +
+          "Chỉ xác nhận nếu bạn thực sự đã hoàn thành."
         );
 
 
-      const users =
-        data.users ||
-        data.leaderboard ||
-        data ||
-        [];
+      if(!confirmed){
+
+        return;
+      }
 
 
-      renderRanking(users, period);
+      try{
+
+        const result =
+          await apiFetch("/tasks/complete",{
+            method:"POST",
+            body:JSON.stringify({
+              taskId:Number(task.id)
+            })
+          });
 
 
-    } catch (error) {
+        showToast(
+          `Hoàn thành! +${Number(result.points || task.points || 0)} điểm`
+        );
 
-      /*
-        Nếu backend chưa có dữ liệu,
-        vẫn hiển thị giao diện.
-      */
 
-      renderRanking([], period);
+        await loadUser();
 
-      console.warn(
-        "Ranking:",
-        error.message
-      );
+        loadTasks();
 
-    }
+      }catch(error){
+
+        showToast(error.message);
+
+      }
+
+    },1200);
+
+
+  }catch(error){
+
+    showToast(error.message);
+
+  }
+}
+
+
+function changeRanking(period){
+
+  currentRanking = period;
+
+
+  document.getElementById("dayTab")
+    .classList.toggle("active",period === "day");
+
+  document.getElementById("weekTab")
+    .classList.toggle("active",period === "week");
+
+
+  loadLeaderboard();
+}
+
+
+async function loadLeaderboard(){
+
+  const container =
+    document.getElementById("leaderboardList");
+
+  container.innerHTML =
+    '<div class="loading">Đang tải bảng xếp hạng...</div>';
+
+
+  if(currentRanking === "day"){
+
+    document.getElementById("reward1").textContent =
+      "50 điểm";
+
+    document.getElementById("reward2").textContent =
+      "30 điểm";
+
+    document.getElementById("reward3").textContent =
+      "20 điểm";
+
+  }else{
+
+    document.getElementById("reward1").textContent =
+      "150 điểm";
+
+    document.getElementById("reward2").textContent =
+      "100 điểm";
+
+    document.getElementById("reward3").textContent =
+      "50 điểm";
 
   }
 
 
-  function renderRanking(users, period) {
+  try{
 
-    const list =
-      document.getElementById(
-        "rankingList"
+    const data =
+      await apiFetch(
+        "/leaderboard?period=" +
+        encodeURIComponent(currentRanking)
       );
 
 
-    if (!Array.isArray(users) ||
-        users.length === 0) {
+    const users =
+      Array.isArray(data)
+        ? data
+        : (data.leaderboard || data.users || []);
 
-      list.innerHTML = `
 
-        <div class="login-card">
+    if(!users.length){
 
-          <div class="big-icon">
-            🏆
-          </div>
-
-          <h2>
-            Chưa có dữ liệu
-          </h2>
-
-          <p>
-            Bảng xếp hạng sẽ xuất hiện khi có người dùng tích điểm.
-          </p>
-
-        </div>
-
-      `;
+      container.innerHTML =
+        '<div class="empty">Chưa có dữ liệu xếp hạng.</div>';
 
       return;
-
     }
 
 
-    const rewards =
-      period === "day"
+    container.innerHTML =
+      users.map((user,index)=>{
 
-        ? [50, 30, 20]
+        const rank =
+          Number(user.rank || index + 1);
 
-        : [150, 100, 50];
-
-
-    list.innerHTML =
-      users
-        .slice(0, 50)
-        .map((user, index) => {
-
-          const rank =
-            index + 1;
+        const username =
+          user.username ||
+          user.name ||
+          "Người dùng";
 
 
-          const username =
-            escapeHtml(
-              user.username ||
-              "Người dùng"
-            );
+        const points =
+          Number(
+            user.points ??
+            user.total_points ??
+            0
+          );
 
 
-          const points =
-            Number(
-              user.points || 0
-            );
+        let medal = rank;
+
+        if(rank === 1) medal = "🥇";
+        if(rank === 2) medal = "🥈";
+        if(rank === 3) medal = "🥉";
 
 
-          const reward =
-            rewards[index] ||
-            0;
+        return `
+          <div class="rank-row rank-${rank <= 3 ? rank : ''}">
 
+            <div class="rank">${medal}</div>
 
-          let medal =
-            "";
-
-
-          if (rank === 1) medal = "🥇";
-          if (rank === 2) medal = "🥈";
-          if (rank === 3) medal = "🥉";
-
-
-          return `
-
-            <div class="ranking-row">
-
-              <div class="rank-number">
-                ${medal || rank}
-              </div>
-
-
-              <div class="rank-user">
-
-                <div class="avatar">
-                  ${escapeHtml(
-                    username
-                      .charAt(0)
-                      .toUpperCase()
-                  )}
-                </div>
-
-                <span>
-                  ${username}
-                </span>
-
-              </div>
-
-
-              <div class="rank-points">
-                ${points}
-              </div>
-
-
-              <div class="rank-reward">
-
-                ${
-                  reward
-                    ? "+" + reward
-                    : "—"
-                }
-
-              </div>
-
+            <div class="rank-name">
+              ${escapeHtml(username)}
             </div>
 
-          `;
+            <div class="rank-points">
+              ${points.toLocaleString("vi-VN")} điểm
+            </div>
 
-        })
-        .join("");
+          </div>
+        `;
 
+      }).join("");
+
+
+  }catch(error){
+
+    container.innerHTML =
+      `<div class="empty">
+        Không tải được bảng xếp hạng.<br>
+        <small>${escapeHtml(error.message)}</small>
+      </div>`;
+
+  }
+}
+
+
+function renderAccount(){
+
+  const container =
+    document.getElementById("accountContent");
+
+
+  if(!currentUser){
+
+    container.innerHTML = `
+      <div class="card form-box">
+
+        <h2 style="margin-bottom:10px;">
+          Bạn chưa đăng nhập
+        </h2>
+
+        <p style="color:#70798b;line-height:1.6;margin-bottom:18px;">
+          Đăng nhập để lưu điểm, hoàn thành nhiệm vụ
+          và tham gia bảng xếp hạng.
+        </p>
+
+        <button class="primary" onclick="openAuth()">
+          Đăng nhập / Đăng ký
+        </button>
+
+      </div>
+    `;
+
+    return;
   }
 
 
-  /* ======================================
-     MODAL EVENTS
-  ====================================== */
+  container.innerHTML = `
+    <div class="card form-box">
 
-  document
-    .getElementById("authModal")
-    .addEventListener(
-      "click",
-      function(event) {
+      <h2 style="margin-bottom:20px;">
+        Xin chào, ${escapeHtml(currentUser.username)}
+      </h2>
 
-        if (event.target === this) {
+      <div class="profile-info">
 
-          closeAuth();
+        <div class="info-row">
+          <span>Tên người dùng</span>
+          <strong>${escapeHtml(currentUser.username)}</strong>
+        </div>
 
-        }
+        <div class="info-row">
+          <span>Email</span>
+          <strong>${escapeHtml(currentUser.email || "")}</strong>
+        </div>
 
-      }
-    );
+        <div class="info-row">
+          <span>Điểm</span>
+          <strong>
+            ${Number(currentUser.points || 0).toLocaleString("vi-VN")}
+          </strong>
+        </div>
+
+        <div class="info-row">
+          <span>Đã hoàn thành</span>
+          <strong>
+            ${Number(currentUser.completed || 0).toLocaleString("vi-VN")}
+          </strong>
+        </div>
+
+      </div>
+
+      <button
+        class="secondary"
+        style="width:100%;margin-top:20px;"
+        onclick="logout()"
+      >
+        Đăng xuất
+      </button>
+
+    </div>
+  `;
+}
 
 
-  document.addEventListener(
-    "keydown",
-    function(event) {
+document.getElementById("authModal")
+  .addEventListener("click",function(e){
 
-      if (event.key === "Escape") {
-
-        closeAuth();
-
-      }
-
+    if(e.target === this){
+      closeAuth();
     }
-  );
+
+  });
 
 
-  /* ======================================
-     START
-  ====================================== */
+(async function init(){
 
-  async function init() {
+  await loadUser();
 
-    updateUserUI();
+  loadLeaderboard();
 
-    await checkSession();
-
-    if (currentUser) {
-
-      await refreshDashboard();
-
-    } else {
-
-      loadTasks();
-
-    }
-
-
-    loadRanking("day");
-
-  }
-
-
-  init();
-
+})();
 </script>
 
 </body>
